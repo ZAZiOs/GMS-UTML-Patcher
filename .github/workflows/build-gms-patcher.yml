@@ -26,8 +26,27 @@ jobs:
       run: |
         dotnet publish GMS-Patcher/GMS-UTML-Patcher.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true --output ./publish
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
+    - name: Zip published files
+      run: Compress-Archive -Path ./publish/* -DestinationPath ./release.zip
+      shell: powershell
+
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
+      id: create_release
+      uses: softprops/action-gh-release@v1
       with:
-        name: GMS-UTML-Patcher
-        path: ./publish
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release v1.0.${{ github.run_number }}
+        body: Automated build release from main branch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Release Asset
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: GMS-UTML-Patcher-win-x64.zip
+        files: ./release.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
