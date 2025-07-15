@@ -33,23 +33,6 @@ This project relies on the following libraries:
 * [UndertaleModLib](https://github.com/UnderminersTeam/UndertaleModTool)
 * [UnderAnalyzer](https://github.com/UnderminersTeam/Underanalyzer)
 
-To build them:
-
-```bash
-git clone https://github.com/UnderminersTeam/UndertaleModTool
-cd UndertaleModTool
-git clone https://github.com/UnderminersTeam/Underanalyzer
-cd UndertaleModLib
-dotnet build -c Release
-```
-
-After building, go to `UndertaleModLib/bin/Release/net8.0/` and copy the following files:
-
-* `UndertaleModLib.dll`
-* `Underanalyzer.dll`
-
-Paste them into the `libs/` folder in the root of this project.
-
 ## Building
 
 ```bash
