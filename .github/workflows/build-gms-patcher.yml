@@ -27,7 +27,7 @@ jobs:
         dotnet publish GMS-Patcher/GMS-UTML-Patcher.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true --output ./publish
 
     - name: Zip published files
-      run: Compress-Archive -Path ./publish/* -DestinationPath ./release.zip
+      run: Compress-Archive -Path ./publish/* -DestinationPath ./GMS-UTML-Patcher-win-x64.zip
       shell: powershell
 
     - name: Create Release
@@ -46,7 +46,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v1.0.${{ github.run_number }}
-        name: GMS-UTML-Patcher-win-x64.zip
-        files: ./release.zip
+        name: GMS Patcher v1.0.${{ github.run_number }}
+        files: ./GMS-UTML-Patcher-win-x64.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
