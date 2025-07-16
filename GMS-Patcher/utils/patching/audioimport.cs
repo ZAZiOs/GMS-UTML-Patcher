@@ -26,7 +26,7 @@ public static class AudioImporter
 {
     public static int Import(UndertaleData data, AudioImportConfig config)
     {
-        string importFolder = config.Directory;
+        string importFolder = PatchFile.GetRelativePath(config.Directory);
         if (!Directory.Exists(importFolder))
         {
             Console.WriteLine($"[AUDIO][ERROR 311] Import folder doesn't exist: {importFolder}");

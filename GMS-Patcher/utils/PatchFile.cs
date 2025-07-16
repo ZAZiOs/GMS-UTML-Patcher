@@ -6,6 +6,23 @@ using UndertaleModLib.Models;
 
 public static class PatchFile
 {
+    public static string? GetRelativePath(string relativePathFromJson)
+    {
+        if (string.IsNullOrEmpty(relativePathFromJson))
+            return null;
+
+        var jsonPath = Program.arguments?.PatcherFile;
+        if (string.IsNullOrEmpty(jsonPath))
+            throw new InvalidOperationException("JSON file path was not specified in arguments.");
+
+        var jsonDirectory = Path.GetDirectoryName(Path.GetFullPath(jsonPath));
+        if (string.IsNullOrEmpty(jsonDirectory))
+            throw new ArgumentException("Invalid JSON file path.");
+
+        var fullPath = Path.Combine(jsonDirectory, relativePathFromJson);
+        return Path.GetFullPath(fullPath);
+    }
+
     public static int Apply(UndertaleData data, string patcherFilePath)
     {
         if (!File.Exists(patcherFilePath))
@@ -15,7 +32,7 @@ public static class PatchFile
         }
 
         Console.WriteLine("[PATCHER][INFO] Applying patch to file...");
-        
+
         try
         {
             using var jsonStream = File.OpenRead(patcherFilePath);
