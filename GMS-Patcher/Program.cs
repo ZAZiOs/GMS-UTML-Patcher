@@ -5,10 +5,9 @@ using UndertaleModLib;
 class Program
 {
     public static bool Debug = false;
+    public static Arguments? arguments;
     static int Main(string[] args)
     {
-        Arguments arguments;
-
         try
         {
             arguments = Arguments.Parse(args);

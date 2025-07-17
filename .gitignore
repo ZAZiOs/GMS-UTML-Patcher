@@ -56,3 +56,4 @@ nunit-*.xml
 libs/
 patch/
 dat*.win
+publish/

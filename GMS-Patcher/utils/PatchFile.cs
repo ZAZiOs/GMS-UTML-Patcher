@@ -6,6 +6,23 @@ using UndertaleModLib.Models;
 
 public static class PatchFile
 {
+    public static string? GetRelativePath(string relativePathFromJson)
+    {
+        if (string.IsNullOrEmpty(relativePathFromJson))
+            return null;
+
+        var jsonPath = Program.arguments?.PatcherFile;
+        if (string.IsNullOrEmpty(jsonPath))
+            throw new InvalidOperationException("JSON file path was not specified in arguments.");
+
+        var jsonDirectory = Path.GetDirectoryName(Path.GetFullPath(jsonPath));
+        if (string.IsNullOrEmpty(jsonDirectory))
+            throw new ArgumentException("Invalid JSON file path.");
+
+        var fullPath = Path.Combine(jsonDirectory, relativePathFromJson);
+        return Path.GetFullPath(fullPath);
+    }
+
     public static int Apply(UndertaleData data, string patcherFilePath)
     {
         if (!File.Exists(patcherFilePath))
@@ -15,7 +32,7 @@ public static class PatchFile
         }
 
         Console.WriteLine("[PATCHER][INFO] Applying patch to file...");
-        
+
         try
         {
             using var jsonStream = File.OpenRead(patcherFilePath);
@@ -45,13 +62,35 @@ public static class PatchFile
                 }
             }
 
-            // Здесь можно добавить поддержку других секций патча.
+            if (doc.RootElement.TryGetProperty("graphics", out var graphicsElement))
+            {
+                var rawJson = graphicsElement.GetRawText();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var graphicsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
+                if (graphicsConfig is not null)
+                {
+                    var result = GraphicsImporter.Import(data, graphicsConfig);
+                    if (result != 0)
+                        return result;
+                }
+                else
+                {
+                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize graphics config.");
+                }
+            }
+
 
             return 0;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[PATCHER][ERROR 300] Failed to apply patch file: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
             return 300;
         }
     }
