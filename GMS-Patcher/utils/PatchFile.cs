@@ -62,13 +62,35 @@ public static class PatchFile
                 }
             }
 
-            // Здесь можно добавить поддержку других секций патча.
+            if (doc.RootElement.TryGetProperty("graphics", out var graphicsElement))
+            {
+                var rawJson = graphicsElement.GetRawText();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var graphicsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
+                if (graphicsConfig is not null)
+                {
+                    var result = GraphicsImporter.Import(data, graphicsConfig);
+                    if (result != 0)
+                        return result;
+                }
+                else
+                {
+                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize graphics config.");
+                }
+            }
+
 
             return 0;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[PATCHER][ERROR 300] Failed to apply patch file: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
             return 300;
         }
     }
