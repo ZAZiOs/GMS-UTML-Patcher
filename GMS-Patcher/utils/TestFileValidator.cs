@@ -82,7 +82,7 @@ public static class TestFileValidator
             var expectedValue = expectedNode.Deserialize<T>();
             if (!Equals(actualValue, expectedValue))
             {
-                Console.WriteLine($"[FAIL] {field} mismatch: expected '{expectedValue}', got '{actualValue}'");
+                Console.WriteLine($"[FAIL] {field} mismatch: expected '{expectedValue}', got '{actualValue}'\n[INFO] To skip SHA256 check - pass --skip-hashcheck\n[INFO] To skip Timestamp check - pass --skip-timecheck");
                 return false;
             }
 

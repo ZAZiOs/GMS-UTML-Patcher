@@ -50,6 +50,7 @@ public static class PatchFile
                 var config = JsonSerializer.Deserialize<AudioImportConfig>(rawJson, options);
                 if (config is not null)
                 {
+                    Console.WriteLine("[PATCHER][INFO] Importing audio files...");
                     var audio_result = AudioImporter.Import(data, config);
                     if (audio_result != 0)
                     {
@@ -74,6 +75,7 @@ public static class PatchFile
                 var graphicsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
                 if (graphicsConfig is not null)
                 {
+                    Console.WriteLine("[PATCHER][INFO] Importing sprites...");
                     var result = GraphicsImporter.Import(data, graphicsConfig);
                     if (result != 0)
                         return result;
@@ -81,6 +83,52 @@ public static class PatchFile
                 else
                 {
                     Console.WriteLine("[PATCHER][WARNING] Failed to deserialize graphics config.");
+                }
+            }
+
+            if (doc.RootElement.TryGetProperty("fonts", out var fontsElement))
+            {
+                var rawJson = fontsElement.GetRawText();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var fontsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
+                if (fontsConfig is not null)
+                {
+                    Console.WriteLine("[PATCHER][INFO] Importing fonts...");
+                    var result = FontsImporter.Import(data, fontsConfig);
+                    if (result != 0)
+                        return result;
+                }
+                else
+                {
+                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize fonts config.");
+                }
+            }
+
+            if (doc.RootElement.TryGetProperty("gml", out var gmlElement))
+            {
+                var rawJson = gmlElement.GetRawText();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var gmlConfig = JsonSerializer.Deserialize<GMLImportConfig>(rawJson, options);
+                if (gmlConfig is not null)
+                {
+                    Console.WriteLine("[PATCHER][INFO] Importing code files...");
+                    var result = GMLImporter.Import(data, gmlConfig);
+                    if (result != 0)
+                        return result;
+                }
+                else
+                {
+                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize GML config.");
                 }
             }
 

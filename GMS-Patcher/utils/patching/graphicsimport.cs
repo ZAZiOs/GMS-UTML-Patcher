@@ -11,7 +11,6 @@ using UndertaleModLib.Models;
 using UndertaleModLib.Util;
 using ImageMagick;
 
-using System.Reflection;
 
 
 public class GraphicsImportConfig
@@ -24,6 +23,15 @@ public class GraphicsImportConfig
     public int textureSize { get; set; } = 2048;
     public int paddingBetweenImages { get; set; } = 2;
     public bool debug { get; set; } = false;
+
+    public CenterOriginSettings centerOrigin { get; set; } = new();
+
+    public class CenterOriginSettings
+    {
+        public string[] centerX  { get; set; } = Array.Empty<string>();
+        public string[] centerY  { get; set; } = Array.Empty<string>();
+        public string[] centerBoth  { get; set; } = Array.Empty<string>();
+    }
 
     public Dictionary<string, Dictionary<string, object>> changeProps { get; set; } = new();
 }
@@ -170,6 +178,7 @@ public class GraphicsImporter
                             newSprite.MarginBottom = n.Texture.TargetY + n.Bounds.Height - 1;
                             newSprite.OriginX = 0;
                             newSprite.OriginY = 0;
+
                             if (frame > 0)
                             {
                                 for (int i = 0; i < frame; i++)
@@ -184,12 +193,14 @@ public class GraphicsImporter
                                 maskNodes.Add(newSprite, n);
                             }
 
+                            ImportGraphicsBase.CenterOrigins(newSprite, spriteName);
                             ImportGraphicsBase.ApplyCustomFields(newSprite, spriteName);
                             newSprite.Textures.Add(texentry);
                             Data.Sprites.Add(newSprite);
                             continue;
                         }
 
+                        ImportGraphicsBase.CenterOrigins(sprite, spriteName);
                         ImportGraphicsBase.ApplyCustomFields(sprite, spriteName);
                         if (frame > sprite.Textures.Count - 1)
                         {
@@ -883,7 +894,19 @@ public class ImportGraphicsBase
         }
     }
 
+    public static void CenterOrigins(UndertaleSprite sprite, string spriteName)
+    {
+        var config = GraphicsImporter.CurrentConfig.centerOrigin;
+        bool centerX = config.centerX.Contains(spriteName) || config.centerBoth.Contains(spriteName);
+        bool centerY = config.centerY.Contains(spriteName) || config.centerBoth.Contains(spriteName);
+        if (!centerX && !centerY) return;
 
+        uint width = sprite.Width;
+        uint height = sprite.Height;
+
+        if (centerX) sprite.OriginX = (int)(width / 2);
+        if (centerY) sprite.OriginY = (int)(height / 2);
+    }
 }
 
 
