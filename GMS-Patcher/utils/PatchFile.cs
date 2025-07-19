@@ -27,11 +27,11 @@ public static class PatchFile
     {
         if (!File.Exists(patcherFilePath))
         {
-            Console.WriteLine($"[PATCHER][ERROR 103] Patcher file not found: {patcherFilePath}");
+            Out.ERROR("PATCHER", "white", 103, $"Patcher file not found: {patcherFilePath}");
             return 103;
         }
 
-        Console.WriteLine("[PATCHER][INFO] Applying patch to file...");
+        Out.INFO("PATCHER", "white", "Applying patch to file...");
 
         try
         {
@@ -50,7 +50,7 @@ public static class PatchFile
                 var config = JsonSerializer.Deserialize<AudioImportConfig>(rawJson, options);
                 if (config is not null)
                 {
-                    Console.WriteLine("[PATCHER][INFO] Importing audio files...");
+                    Out.INFO("PATCHER", "white", "Importing audio files...");
                     var audio_result = AudioImporter.Import(data, config);
                     if (audio_result != 0)
                     {
@@ -59,7 +59,7 @@ public static class PatchFile
                 }
                 else
                 {
-                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize audio config.");
+                    Out.WARN("PATCHER", "white", "Failed to deserialize audio config.");
                 }
             }
 
@@ -75,14 +75,14 @@ public static class PatchFile
                 var graphicsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
                 if (graphicsConfig is not null)
                 {
-                    Console.WriteLine("[PATCHER][INFO] Importing sprites...");
+                    Out.INFO("PATCHER", "white", "Importing sprites...");
                     var result = GraphicsImporter.Import(data, graphicsConfig);
                     if (result != 0)
                         return result;
                 }
                 else
                 {
-                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize graphics config.");
+                    Out.WARN("PATCHER", "white", "Failed to deserialize graphics config.");
                 }
             }
 
@@ -98,14 +98,14 @@ public static class PatchFile
                 var fontsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
                 if (fontsConfig is not null)
                 {
-                    Console.WriteLine("[PATCHER][INFO] Importing fonts...");
+                    Out.INFO("PATCHER", "white", "Importing fonts...");
                     var result = FontsImporter.Import(data, fontsConfig);
                     if (result != 0)
                         return result;
                 }
                 else
                 {
-                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize fonts config.");
+                    Out.WARN("PATCHER", "white", "Failed to deserialize fonts config.");
                 }
             }
 
@@ -121,24 +121,23 @@ public static class PatchFile
                 var gmlConfig = JsonSerializer.Deserialize<GMLImportConfig>(rawJson, options);
                 if (gmlConfig is not null)
                 {
-                    Console.WriteLine("[PATCHER][INFO] Importing code files...");
+                    Out.INFO("PATCHER", "white", "Importing code files...");
                     var result = GMLImporter.Import(data, gmlConfig);
                     if (result != 0)
                         return result;
                 }
                 else
                 {
-                    Console.WriteLine("[PATCHER][WARNING] Failed to deserialize GML config.");
+                    Out.WARN("PATCHER", "white", "Failed to deserialize GML config.");
                 }
             }
-
 
             return 0;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[PATCHER][ERROR 300] Failed to apply patch file: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
+            Out.ERROR("PATCHER", "white", 300, $"Failed to apply patch file: {ex.Message}");
+            Out.INFO("PATCHER", "white", ex.StackTrace);
             return 300;
         }
     }

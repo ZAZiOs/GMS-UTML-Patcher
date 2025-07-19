@@ -29,7 +29,7 @@ public static class AudioImporter
         string importFolder = PatchFile.GetRelativePath(config.Directory);
         if (!Directory.Exists(importFolder))
         {
-            Console.WriteLine($"[AUDIO][ERROR 311] Import folder doesn't exist: {importFolder}");
+            Out.ERROR("AUDIO", "red", 311, $"Import folder doesn't exist: {importFolder}");
             return 311;
         }
 
@@ -45,7 +45,7 @@ public static class AudioImporter
         bool hasGroups = data.AudioGroups.Count > 0;
         int groupID = -1;
 
-        Console.WriteLine($"[AUDIO][INFO] Import from: {importFolder} ({dirFiles.Length} files)");
+        Out.INFO("AUDIO", "red", $"Import from: {importFolder} ({dirFiles.Length} files)");
 
         foreach (var file in dirFiles)
         {
@@ -57,7 +57,6 @@ public static class AudioImporter
             var name = Path.GetFileNameWithoutExtension(file);
             bool isOgg = filename.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase);
 
-            // Safely get file-specific config
             AudioFileConfig? fc = null;
             if (config.Files != null && config.Files.TryGetValue(filename, out var tmp))
                 fc = tmp;
@@ -68,14 +67,12 @@ public static class AudioImporter
             bool useGroup = embed && hasGroups && !string.IsNullOrEmpty(grpName);
 
             var existing = data.Sounds.FirstOrDefault(s => s?.Name?.Content == name);
-            Console.WriteLine(existing != null
-                ? $"[AUDIO][INFO] Replacing: {name}" 
-                : $"[AUDIO][INFO] Adding: {name}");
+            Out.INFO("AUDIO", "red", existing != null 
+                ? $"Replacing: {name}" 
+                : $"Adding: {name}");
 
-            // assign or create group
             if (useGroup && existing == null)
             {
-                // find index via LINQ
                 groupID = Enumerable.Range(0, data.AudioGroups.Count)
                     .FirstOrDefault(i => data.AudioGroups[i]?.Name?.Content == grpName);
                 if (groupID < 0)
@@ -99,7 +96,6 @@ public static class AudioImporter
                 embedID = data.EmbeddedAudio.Count - 1;
             }
 
-            // flags
             var flags = AudioEntryFlags.Regular;
             if (isOgg && embed && decode)
                 flags = AudioEntryFlags.IsEmbedded | AudioEntryFlags.IsCompressed | AudioEntryFlags.Regular;
@@ -154,7 +150,7 @@ public static class AudioImporter
             }
         }
 
-        Console.WriteLine("[AUDIO][SUCCESS] Imported.");
+        Out.SUCCESS("AUDIO", "red", "Import completed successfully");
         return 0;
     }
 }

@@ -9,20 +9,21 @@ using UndertaleModLib;
 using UndertaleModLib.Models;
 using UndertaleModLib.Util;
 
-class GMLImportConfig
+public class GMLImportConfig
 {
     public required string directory { get; set; }
     public bool linkCode { get; set; } = true;
     public string importType { get; set; } = "basic";
+    public bool debug { get; set; } = false;
 }
 
-class GMLImporter
+public class GMLImporter
 {
     public static int Import(UndertaleData Data, GMLImportConfig config)
     {
         if (string.IsNullOrEmpty(config.directory))
         {
-            Console.WriteLine("[GML][ERROR] Import directory is not set.");
+            Out.ERROR("CODE", "yellow", 1, "Import directory is not set");
             return 1;
         }
         
@@ -30,40 +31,62 @@ class GMLImporter
 
         if (dirFiles.Length == 0)
         {
-            Console.WriteLine("[GML][ERROR] The selected folder is empty.");
+            Out.ERROR("CODE", "yellow", 2, "The selected folder is empty");
             return 2;
         }
-        else if (!dirFiles.Any(x => x.EndsWith(".gml")))
+        else if (!dirFiles.Any(x => x.EndsWith(".gml", StringComparison.OrdinalIgnoreCase)))
         {
-            Console.WriteLine("[GML][ERROR] The selected folder doesn't contain any GML file.");
+            Out.ERROR("CODE", "yellow", 3, "The selected folder doesn't contain any GML files");
             return 3;
         }
 
         switch (config.importType.ToLower())
         {
             case "basic":
-                return BasicGMLImport.ImportGML(Data, dirFiles);
+                return BasicGMLImport.ImportGML(Data, dirFiles, config);
             default:
-                Console.WriteLine($"[GML][ERROR] Unknown import type: {config.importType}");
+                Out.ERROR("CODE", "yellow", 4, $"Unknown import type: {config.importType}");
                 return 4;
         }
     }
 }
 
-class BasicGMLImport
+public class BasicGMLImport
 {
-    public static int ImportGML(UndertaleData Data, string[] dirFiles)
+    public static int ImportGML(UndertaleData Data, string[] dirFiles, GMLImportConfig config)
     {
         UndertaleModLib.Compiler.CodeImportGroup importGroup = new UndertaleModLib.Compiler.CodeImportGroup(Data);
+        int importedCount = 0;
 
-        foreach (string file in dirFiles)
+        Out.INFO("CODE", "yellow", $"Starting import of {dirFiles.Length} GML files...");
+
+        foreach (string file in dirFiles.Where(f => f.EndsWith(".gml", StringComparison.OrdinalIgnoreCase)))
         {
-            string code = File.ReadAllText(file);
-            string codeName = Path.GetFileNameWithoutExtension(file);
-            importGroup.QueueReplace(codeName, code);
+            try
+            {
+                string code = File.ReadAllText(file);
+                string codeName = Path.GetFileNameWithoutExtension(file);
+                importGroup.QueueReplace(codeName, code);
+                importedCount++;
+                if (config.debug)
+                    Out.VERBOSE("CODE", "yellow", $"Queued for import: {codeName}");
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("CODE", "yellow", 100, $"Failed to read file {Path.GetFileName(file)}: {ex.Message}");
+            }
         }
-        importGroup.Import();
-        Console.WriteLine("[GML][SUCCESS] All files successfully imported.");
-        return 0;
+
+        try
+        {
+            importGroup.Import();
+            Out.SUCCESS("CODE", "yellow", $"Successfully imported {importedCount} GML files");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Out.ERROR("CODE", "yellow", 101, $"Import failed: {ex.Message}");
+            return 101;
+        }
     }
 }

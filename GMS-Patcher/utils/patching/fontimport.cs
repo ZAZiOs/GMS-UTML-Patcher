@@ -17,50 +17,47 @@ public class FontsImporter
 {
     public static GraphicsImportConfig CurrentConfig { get; private set; }
     public static UndertaleData CurrentData { get; private set; }
+    
     public static int Import(UndertaleData Data, GraphicsImportConfig config)
     {
         CurrentConfig = config;
         CurrentData = Data;
+        
         if (string.IsNullOrEmpty(config.directory))
         {
-            Console.WriteLine("[FONTS][ERROR] Import directory is not set.");
+            Out.ERROR("FONTS", "cyan", 1, "Import directory is not set");
             return 1;
         }
 
         string importFolder = PatchFile.GetRelativePath(config.directory);
         if (!Directory.Exists(importFolder))
         {
-            Console.WriteLine($"[FONTS][ERROR 301] Import folder doesn't exist: {importFolder}");
+            Out.ERROR("FONTS", "cyan", 301, $"Import folder doesn't exist: {importFolder}");
             return 301;
         }
 
         var dirFiles = Directory.GetFiles(importFolder, config.searchPattern);
         if (dirFiles.Length == 0)
         {
-            Console.WriteLine("[FONTS][ERROR] The selected folder is empty or doesn't contain any images.");
+            Out.ERROR("FONTS", "cyan", 302, "The selected folder is empty or doesn't contain any images");
             return 302;
         }
 
-        Console.WriteLine($"[FONTS][INFO] Importing from: {importFolder} ({dirFiles.Length} files)");
+        Out.INFO("FONTS", "cyan", $"Importing from: {importFolder} ({dirFiles.Length} files)");
 
         string tempFolder = PatchFile.GetRelativePath(config.tempFolder);
         Directory.CreateDirectory(tempFolder);
-
         string outName = Path.Combine(tempFolder, "atlas.txt");
 
-
-
         ImportFontsBase.Packer packer = new ImportFontsBase.Packer();
-
         packer.Process(importFolder, config.searchPattern, config.textureSize, config.paddingBetweenImages, config.debug);
         packer.SaveAtlasses(outName);
-        Console.WriteLine($"[FONTS][INFO] Atlases saved to: {outName}");
+        
+        Out.INFO("FONTS", "cyan", $"Atlases saved to: {outName}");
 
         int lastTextPage = CurrentData.EmbeddedTextures.Count - 1;
         int lastTextPageItem = CurrentData.TexturePageItems.Count - 1;
-
         string prefix = outName.Replace(Path.GetExtension(outName), "");
-
         int atlasCount = 0;
 
         foreach (ImportFontsBase.Atlas atlas in packer.Atlasses)
@@ -68,8 +65,9 @@ public class FontsImporter
             string atlasName = $"{prefix}{atlasCount:000}.png";
             UndertaleEmbeddedTexture texture = new UndertaleEmbeddedTexture();
             texture.Name = new UndertaleString($"Texture {++lastTextPage}");
-            texture.TextureData.Image = GMImage.FromPng(File.ReadAllBytes(atlasName)); // TODO: generate other formats
+            texture.TextureData.Image = GMImage.FromPng(File.ReadAllBytes(atlasName));
             CurrentData.EmbeddedTextures.Add(texture);
+            
             foreach (ImportFontsBase.Node n in atlas.Nodes)
             {
                 if (n.Texture != null)
@@ -88,10 +86,9 @@ public class FontsImporter
                     texturePageItem.BoundingHeight = (ushort)n.Bounds.Height;
                     texturePageItem.TexturePage = texture;
                     CurrentData.TexturePageItems.Add(texturePageItem);
+                    
                     string spriteName = Path.GetFileNameWithoutExtension(n.Texture.Source);
-
-                    UndertaleFont font = null;
-                    font = CurrentData.Fonts.ByName(spriteName);
+                    UndertaleFont font = CurrentData.Fonts.ByName(spriteName);
 
                     if (font == null)
                     {
@@ -99,21 +96,38 @@ public class FontsImporter
                         UndertaleFont newFont = new UndertaleFont();
                         newFont.Name = fontUTString;
 
-                        ImportFontsBase.fontUpdate(newFont);
-                        newFont.Texture = texturePageItem;
-                        CurrentData.Fonts.Add(newFont);
+                        try 
+                        {
+                            ImportFontsBase.fontUpdate(newFont);
+                            newFont.Texture = texturePageItem;
+                            CurrentData.Fonts.Add(newFont);
+                            if (config.debug)
+                                Out.VERBOSE("FONTS", "cyan", $"Added new font: {spriteName}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Out.ERROR("FONTS", "cyan", 303, $"Failed to add font {spriteName}: {ex.Message}");
+                        }
                         continue;
                     }
 
-                    ImportFontsBase.fontUpdate(font);
-                    font.Texture = texturePageItem;
-                    UndertaleSprite.TextureEntry texentry = new UndertaleSprite.TextureEntry();
-                    texentry.Texture = texturePageItem;
+                    try
+                    {
+                        ImportFontsBase.fontUpdate(font);
+                        font.Texture = texturePageItem;
+                        if (config.debug)
+                            Out.VERBOSE("FONTS", "cyan", $"Updated font: {spriteName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Out.ERROR("FONTS", "cyan", 304, $"Failed to update font {spriteName}: {ex.Message}");
+                    }
                 }
             }
             atlasCount++;
         }
-        Data = CurrentData;
+        
+        Out.SUCCESS("FONTS", "cyan", "Font import completed successfully");
         return 0;
     }
 }

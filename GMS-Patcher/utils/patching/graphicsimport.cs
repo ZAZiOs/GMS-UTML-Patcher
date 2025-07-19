@@ -49,18 +49,24 @@ public class GraphicsImporter
         string importFolder = ImportGraphicsBase.CheckValidity();
         if (!Directory.Exists(importFolder))
         {
-            Console.WriteLine($"[GRAPHICS][ERROR 311] Import folder doesn't exist: {importFolder}");
+            Out.ERROR("GRAPHICS", "green", 311, $"Import folder doesn't exist: {importFolder}");
             return 311;
         }
+
         string tempFolder = PatchFile.GetRelativePath(config.tempFolder);
         Directory.CreateDirectory(tempFolder);
+
+        if (config.debug)
+            Out.VERBOSE("GRAPHICS", "green", $"Temp folder created at: {tempFolder}");
 
         string outName = Path.Combine(tempFolder, "atlas.txt");
 
         ImportGraphicsBase.Packer packer = new ImportGraphicsBase.Packer();
         packer.Process(importFolder, config.searchPattern, config.textureSize, config.paddingBetweenImages, config.debug);
         packer.SaveAtlasses(outName);
-        Console.WriteLine($"[GRAPHICS][INFO] Atlases saved to: {outName}");
+
+        Out.INFO("GRAPHICS", "green", $"Atlases saved to: {outName}");
+
 
         int lastTextPage = Data.EmbeddedTextures.Count - 1;
         int lastTextPageItem = Data.TexturePageItems.Count - 1;
@@ -78,7 +84,6 @@ public class GraphicsImporter
             IPixelCollection<byte> atlasPixels = atlasImage.GetPixels();
 
             UndertaleEmbeddedTexture texture = new();
-
             texture.Name = new UndertaleString($"Texture {++lastTextPage}");
             texture.TextureData.Image = GMImage.FromMagickImage(atlasImage).ConvertToPng();
             Data.EmbeddedTextures.Add(texture);
@@ -87,7 +92,9 @@ public class GraphicsImporter
             {
                 if (n.Texture != null)
                 {
-                    // Initalize values of this texture
+                    if (config.debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Processing texture from file: {n.Texture.Source}");
+
                     UndertaleTexturePageItem texturePageItem = new();
                     texturePageItem.Name = new UndertaleString($"PageItem {++lastTextPageItem}");
                     texturePageItem.SourceX = (ushort)n.Bounds.X;
@@ -102,31 +109,29 @@ public class GraphicsImporter
                     texturePageItem.BoundingHeight = (ushort)n.Texture.BoundingHeight;
                     texturePageItem.TexturePage = texture;
 
-                    // Add this texture to UMT
                     Data.TexturePageItems.Add(texturePageItem);
 
-                    // String processing
                     string stripped = Path.GetFileNameWithoutExtension(n.Texture.Source);
-
                     ImportGraphicsBase.SpriteType spriteType = ImportGraphicsBase.GetSpriteType(n.Texture.Source);
+
                     if (config.importUnknownAsSprite)
-                    {
                         if (spriteType == ImportGraphicsBase.SpriteType.Unknown || spriteType == ImportGraphicsBase.SpriteType.Font)
-                        {
                             spriteType = ImportGraphicsBase.SpriteType.Sprite;
-                        }
-                    }
 
                     if (spriteType == ImportGraphicsBase.SpriteType.Background)
                     {
+                        if (config.debug)
+                            Out.VERBOSE("GRAPHICS", "green", $"Assigning texture to background '{stripped}'");
+
                         UndertaleBackground background = Data.Backgrounds.ByName(stripped);
                         if (background != null)
                         {
                             background.Texture = texturePageItem;
+                            if (config.debug)
+                                Out.VERBOSE("GRAPHICS", "green", $"✔ Linked to existing background '{background.Name}'");
                         }
                         else
                         {
-                            // No background found, let's make one
                             UndertaleString backgroundUTString = Data.Strings.MakeString(stripped);
                             UndertaleBackground newBackground = new();
                             newBackground.Name = backgroundUTString;
@@ -134,11 +139,15 @@ public class GraphicsImporter
                             newBackground.Preload = false;
                             newBackground.Texture = texturePageItem;
                             Data.Backgrounds.Add(newBackground);
+                            if (config.debug)
+                                Out.VERBOSE("GRAPHICS", "green", $"➕ Created new background '{backgroundUTString}' and linked texture");
                         }
                     }
                     else if (spriteType == ImportGraphicsBase.SpriteType.Sprite)
                     {
-                        // Get sprite to add this texture to
+                        if (config.debug)
+                            Out.VERBOSE("GRAPHICS", "green", $"Assigning texture to sprite '{stripped}'");
+
                         string spriteName;
                         int frame = 0;
                         try
@@ -149,21 +158,21 @@ public class GraphicsImporter
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine($"[GRAPHICS][ERROR] Failed to parse sprite name and frame from '{stripped}': {e.Message}");
+                            Out.ERROR("GRAPHICS", "green", 320, $"Failed to parse sprite name and frame from '{stripped}': {e.Message}");
                             continue;
                         }
+
 
                         if (string.IsNullOrEmpty(spriteName))
                         {
-                            Console.WriteLine($"[GRAPHICS][ERROR] Sprite name is empty for file '{stripped}'. Skipping.");
+                            Out.ERROR("GRAPHICS", "green", 321, $"Sprite name is empty for file '{stripped}'. Skipping.");
                             continue;
                         }
 
-                        // Create TextureEntry object
+
                         UndertaleSprite.TextureEntry texentry = new();
                         texentry.Texture = texturePageItem;
 
-                        // Set values for new sprites
                         UndertaleSprite sprite = Data.Sprites.ByName(spriteName);
                         if (sprite is null)
                         {
@@ -183,43 +192,47 @@ public class GraphicsImporter
                             {
                                 for (int i = 0; i < frame; i++)
                                     newSprite.Textures.Add(null);
+                                if (config.debug)
+                                    Out.VERBOSE("GRAPHICS", "green", $"Padded sprite '{spriteName}' with {frame} empty frames");
                             }
 
-                            // Only generate collision masks for sprites that need them (in newer GameMaker versions)
                             if (!noMasksForBasicRectangles ||
                                 newSprite.SepMasks is not (UndertaleSprite.SepMaskType.AxisAlignedRect or UndertaleSprite.SepMaskType.RotatedRect))
-                            {
-                                // Generate mask later (when the current atlas is about to be unloaded)
                                 maskNodes.Add(newSprite, n);
-                            }
 
                             ImportGraphicsBase.CenterOrigins(newSprite, spriteName);
                             ImportGraphicsBase.ApplyCustomFields(newSprite, spriteName);
                             newSprite.Textures.Add(texentry);
                             Data.Sprites.Add(newSprite);
+                            if (config.debug)
+                                Out.VERBOSE("GRAPHICS", "green", $"➕ Created new sprite '{spriteName}' and assigned texture to frame {frame}");
                             continue;
                         }
 
                         ImportGraphicsBase.CenterOrigins(sprite, spriteName);
                         ImportGraphicsBase.ApplyCustomFields(sprite, spriteName);
+
                         if (frame > sprite.Textures.Count - 1)
                         {
                             while (frame > sprite.Textures.Count - 1)
-                            {
                                 sprite.Textures.Add(texentry);
-                            }
+                            if (config.debug)
+                                Out.VERBOSE("GRAPHICS", "green", $"Extended sprite '{spriteName}' to frame {frame}");
                             continue;
                         }
-                        
-                        sprite.Textures[frame] = texentry;
 
-                        // Update sprite dimensions
+                        sprite.Textures[frame] = texentry;
+                        if (config.debug)
+                            Out.VERBOSE("GRAPHICS", "green", $"Inserted texture into sprite '{spriteName}' frame {frame}");
+
                         uint oldWidth = sprite.Width, oldHeight = sprite.Height;
                         sprite.Width = (uint)n.Texture.BoundingWidth;
                         sprite.Height = (uint)n.Texture.BoundingHeight;
                         bool changedSpriteDimensions = (oldWidth != sprite.Width || oldHeight != sprite.Height);
 
-                        // Grow bounding box depending on how much is trimmed
+                        if (changedSpriteDimensions && config.debug)
+                            Out.VERBOSE("GRAPHICS", "green", $"Sprite '{spriteName}' resized to {sprite.Width}x{sprite.Height}");
+
                         bool grewBoundingBox = false;
                         bool fullImageBbox = sprite.BBoxMode == 1;
                         bool manualBbox = sprite.BBoxMode == 2;
@@ -251,7 +264,6 @@ public class GraphicsImporter
                             }
                         }
 
-                        // Only generate collision masks for sprites that need them (in newer GameMaker versions)
                         if (!noMasksForBasicRectangles ||
                             sprite.SepMasks is not (UndertaleSprite.SepMaskType.AxisAlignedRect or UndertaleSprite.SepMaskType.RotatedRect) ||
                             sprite.CollisionMasks.Count > 0)
@@ -259,11 +271,7 @@ public class GraphicsImporter
                             if ((bboxMasks && grewBoundingBox) ||
                                 (sprite.SepMasks is UndertaleSprite.SepMaskType.Precise && sprite.CollisionMasks.Count == 0) ||
                                 (!bboxMasks && changedSpriteDimensions))
-                            {
-                                // Use this node for the sprite's collision mask if the bounding box grew, if no collision mask exists for a precise sprite,
-                                // or if the sprite's dimensions have been changed altogether when bbox masks are not active.
                                 maskNodes[sprite] = n;
-                            }
                         }
                     }
                 }
@@ -271,6 +279,8 @@ public class GraphicsImporter
 
             foreach ((UndertaleSprite maskSpr, ImportGraphicsBase.Node maskNode) in maskNodes)
             {
+                if (config.debug)
+                    Out.VERBOSE("GRAPHICS", "green", $"Generating collision mask for sprite '{maskSpr.Name}'");
                 // Generate collision mask using either bounding box or sprite dimensions
                 maskSpr.CollisionMasks.Clear();
                 maskSpr.CollisionMasks.Add(maskSpr.NewMaskEntry(Data));
@@ -313,7 +323,7 @@ public class GraphicsImporter
             // Increment atlas
             atlasCount++;
         }
-        Console.WriteLine($"[GRAPHICS][INFO] Imported {Data.TexturePageItems.Count} texture page items and {Data.EmbeddedTextures.Count} embedded textures.");
+        Out.INFO("GRAPHICS", "green", $"Imported {Data.TexturePageItems.Count} texture page items and {Data.EmbeddedTextures.Count} embedded textures.");
 
         foreach (MagickImage img in imagesToCleanup)
         {
@@ -749,15 +759,16 @@ public class ImportGraphicsBase
                 if (!GraphicsImporter.CurrentConfig.importUnknownAsSprite)
                 {
                     if (GraphicsImporter.CurrentConfig.debug)
-                        Console.WriteLine($"[GRAPHICS][NOTE] {FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it's skipped.");
+                        Out.VERBOSE("GRAPHICS", "green", $"{FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it's skipped.");
                     continue;
                 }
                 else
                 {
                     if (GraphicsImporter.CurrentConfig.debug)
-                        Console.WriteLine($"[GRAPHICS][NOTE] {FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it will be imported as sprite.");
+                        Out.VERBOSE("GRAPHICS", "green", $"{FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it will be imported as sprite.");
                     spriteType = SpriteType.Sprite;
                 }
+
             }
 
             // Check for duplicate filenames
@@ -770,9 +781,10 @@ public class ImportGraphicsBase
             {
                 if (sprFrameRegex == null)
                 {
-                    Console.WriteLine("[GRAPHICS][ERROR] sprFrameRegex is null!");
+                    Out.ERROR("GRAPHICS", "green", 330, "sprFrameRegex is null!");
                     return "err_no_regex";
                 }
+
                 var spriteParts = sprFrameRegex.Match(stripped);
                 // Allow sprites without underscores
                 if (!spriteParts.Groups[2].Success)
@@ -837,8 +849,10 @@ public class ImportGraphicsBase
         var config = GraphicsImporter.CurrentConfig.changeProps;
         if (!config.TryGetValue(spriteName, out var spriteProps))
             return;
-        
-        Console.WriteLine($"[GRAPHICS][NOTE] Applying custom properties for sprite '{spriteName}'");
+
+        bool debug = GraphicsImporter.CurrentConfig.debug;
+
+        Out.INFO("GRAPHICS", "green", $"Applying custom properties for sprite '{spriteName}'");
 
         JsonElement? GetJsonElement(object obj)
         {
@@ -851,11 +865,19 @@ public class ImportGraphicsBase
             if (sizeElem.HasValue && sizeElem.Value.ValueKind == JsonValueKind.Object)
             {
                 if (sizeElem.Value.TryGetProperty("width", out var w) && w.TryGetUInt32(out var wVal))
+                {
                     sprite.Width = wVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set Width of '{spriteName}' to {wVal}");
+                }
+
                 if (sizeElem.Value.TryGetProperty("height", out var h) && h.TryGetUInt32(out var hVal))
+                {
                     sprite.Height = hVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set Height of '{spriteName}' to {hVal}");
+                }
             }
-            Console.WriteLine($"[GRAPHICS][NOTE] Set size for sprite '{spriteName}' to {sprite.Width}x{sprite.Height}");
         }
 
         if (spriteProps.TryGetValue("margin", out var marginObj))
@@ -864,21 +886,45 @@ public class ImportGraphicsBase
             if (marginElem.HasValue && marginElem.Value.ValueKind == JsonValueKind.Object)
             {
                 if (marginElem.Value.TryGetProperty("left", out var l) && l.TryGetInt32(out var lVal))
+                {
                     sprite.MarginLeft = lVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set MarginLeft of '{spriteName}' to {lVal}");
+                }
+
                 if (marginElem.Value.TryGetProperty("right", out var r) && r.TryGetInt32(out var rVal))
+                {
                     sprite.MarginRight = rVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set MarginRight of '{spriteName}' to {rVal}");
+                }
+
                 if (marginElem.Value.TryGetProperty("top", out var t) && t.TryGetInt32(out var tVal))
+                {
                     sprite.MarginTop = tVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set MarginTop of '{spriteName}' to {tVal}");
+                }
+
                 if (marginElem.Value.TryGetProperty("bottom", out var b) && b.TryGetInt32(out var bVal))
+                {
                     sprite.MarginBottom = bVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set MarginBottom of '{spriteName}' to {bVal}");
+                }
             }
         }
 
         if (spriteProps.TryGetValue("transparent", out var transparentObj))
         {
             var transparentElem = GetJsonElement(transparentObj);
-            if (transparentElem.HasValue && (transparentElem.Value.ValueKind == JsonValueKind.True || transparentElem.Value.ValueKind == JsonValueKind.False))
+            if (transparentElem.HasValue &&
+                (transparentElem.Value.ValueKind == JsonValueKind.True || transparentElem.Value.ValueKind == JsonValueKind.False))
+            {
                 sprite.Transparent = transparentElem.Value.GetBoolean();
+                if (debug)
+                    Out.VERBOSE("GRAPHICS", "green", $"Set Transparent of '{spriteName}' to {sprite.Transparent}");
+            }
         }
 
         if (spriteProps.TryGetValue("origin", out var originObj))
@@ -887,12 +933,22 @@ public class ImportGraphicsBase
             if (originElem.HasValue && originElem.Value.ValueKind == JsonValueKind.Object)
             {
                 if (originElem.Value.TryGetProperty("x", out var ox) && ox.TryGetInt32(out var oxVal))
+                {
                     sprite.OriginX = oxVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set OriginX of '{spriteName}' to {oxVal}");
+                }
+
                 if (originElem.Value.TryGetProperty("y", out var oy) && oy.TryGetInt32(out var oyVal))
+                {
                     sprite.OriginY = oyVal;
+                    if (debug)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set OriginY of '{spriteName}' to {oyVal}");
+                }
             }
         }
     }
+
 
     public static void CenterOrigins(UndertaleSprite sprite, string spriteName)
     {
