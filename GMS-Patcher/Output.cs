@@ -30,15 +30,28 @@ public static class Out
         ResetColor();
 
         int currentPos = Console.CursorLeft;
+        int messageStartPos = 20;
 
-        int messageStartPos = 18;
+        string padding = new string(' ', messageStartPos);
+
+        string[] lines = message.Split('\n');
 
         if (currentPos < messageStartPos)
             Console.Write(new string(' ', messageStartPos - currentPos));
         else
             Console.Write(" ");
 
-        Console.WriteLine(message);
+        Console.Write(lines[0]);
+
+        for (int i = 1; i < lines.Length; i++)
+        {
+            Console.WriteLine();
+            Console.Write(padding);
+            Console.Write(lines[i]);
+        }
+
+        if (!message.EndsWith("\n"))
+            Console.WriteLine();
     }
 
 
@@ -60,7 +73,7 @@ public static class Out
         => Print(prefix, prefixColor, "[WARN]", ConsoleColor.Yellow, message);
 
     public static void ERROR(string prefix, string prefixColor, int errorCode, string message)
-        => Print(prefix, prefixColor, $"[ERROR {errorCode}]", ConsoleColor.Red, message);
+        => Print(prefix, prefixColor, errorCode == 0 ? "[ERROR]" : $"[ERROR {errorCode}]", ConsoleColor.Red, message);
     
     public static void SUCCESS(string prefix, string prefixColor, string message)
         => Print(prefix, prefixColor, "[SUCCESS]", ConsoleColor.Green, message);
@@ -92,8 +105,8 @@ public static class Out
     Console.ResetColor();
 
     Console.ForegroundColor = ConsoleColor.DarkGray;
-    Console.WriteLine("> Based on UndertaleModLib");
-    Console.WriteLine("> Based on scripts by Samuel Roy, Jockeholm and Kneesnap");
+    Console.WriteLine("> Using UndertaleModLib");
+    Console.WriteLine("> Import scripts based on scripts by Samuel Roy, Jockeholm and Kneesnap");
     Console.ResetColor();
 
     Console.WriteLine();

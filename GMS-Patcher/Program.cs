@@ -21,13 +21,14 @@ class Program
 
         if (Debug)
         {
-            Console.WriteLine($"DataPath: {arguments.DataPath}");
-            Console.WriteLine($"OutputPath: {arguments.OutputPath}");
-            Console.WriteLine($"Patcher: {arguments.PatcherFile}");
-            Console.WriteLine($"SkipTimestampCheck: {arguments.SkipTimestampCheck}");
-            Console.WriteLine($"SkipHashCheck: {arguments.SkipHashCheck}");
-            Console.WriteLine($"TestMode: {arguments.TestMode}");
-            Console.WriteLine($"PatcherMode: {arguments.PatcherMode}");
+            Out.INFO("DEBUG", "red", $"DataPath: {arguments.DataPath}");
+            Out.INFO("DEBUG", "red", $"OutputPath: {arguments.OutputPath}");
+            Out.INFO("DEBUG", "red", $"Patcher: {arguments.PatcherFile}");
+            Out.INFO("DEBUG", "red", $"SkipTimestampCheck: {arguments.SkipTimestampCheck}");
+            Out.INFO("DEBUG", "red", $"SkipHashCheck: {arguments.SkipHashCheck}");
+            Out.INFO("DEBUG", "red", $"TestMode: {arguments.TestMode}");
+            Out.INFO("DEBUG", "red", $"PatcherMode: {arguments.PatcherMode}");
+            Console.WriteLine();
         }
 
         if (string.IsNullOrEmpty(arguments.DataPath))
@@ -44,23 +45,23 @@ class Program
 
         if (!File.Exists(arguments.DataPath))
         {
-            Out.ERROR("IO", "gray", 100, $"File not found: {arguments.DataPath}");
+            Out.ERROR("INPUT", "gray", 100, $"File not found: {arguments.DataPath}");
             return 100;
         }
 
         UndertaleData data;
         try
         {
-            Out.INFO("IO", "gray", $"Loading data.win from: {arguments.DataPath}");
+            Out.INFO("INPUT", "gray", $"Loading data.win from: {arguments.DataPath}");
             using var stream = File.OpenRead(arguments.DataPath);
 
             data = UndertaleIO.Read(stream);
 
-            Out.SUCCESS("IO", "gray", "Loaded data.win successfully.");
+            Out.SUCCESS("INPUT", "gray", "Loaded data.win successfully.");
         }
         catch (Exception ex)
         {
-            Out.ERROR("IO", "gray", 102, $"Failed to load data.win: {ex.Message}");
+            Out.ERROR("INPUT", "gray", 102, $"Failed to load data.win: {ex.Message}");
             return 102;
         }
 
@@ -81,7 +82,7 @@ class Program
 
         if (!File.Exists(arguments.PatcherFile))
         {
-            Out.ERROR("IO", "gray", 103, $"Patcher file not found: {arguments.PatcherFile}");
+            Out.ERROR("INPUT", "gray", 103, $"Patcher file not found: {arguments.PatcherFile}");
             return 103;
         }
 
@@ -105,14 +106,14 @@ class Program
 
         try
         {
-            Out.INFO("IO", "gray", $"Saving patched data to: {arguments.OutputPath}");
+            Out.INFO("OUTPUT", "gray", $"Saving patched data to: {arguments.OutputPath}");
             using var outStream = File.Create(arguments.OutputPath);
             UndertaleIO.Write(outStream, data);
-            Out.SUCCESS("IO", "gray", "Data saved successfully.");
+            Out.SUCCESS("OUTPUT", "gray", "Data saved successfully.");
         }
         catch (Exception ex)
         {
-            Out.ERROR("IO", "gray", 104, $"Failed to save patched data: {ex.Message}");
+            Out.ERROR("OUTPUT", "gray", 104, $"Failed to save patched data: {ex.Message}");
             return 104;
         }
 

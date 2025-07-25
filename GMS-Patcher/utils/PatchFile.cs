@@ -27,118 +27,141 @@ public static class PatchFile
     {
         if (!File.Exists(patcherFilePath))
         {
-            Out.ERROR("PATCHER", "white", 103, $"Patcher file not found: {patcherFilePath}");
+            Out.ERROR("PATCHER", "gray", 103, $"Patcher file not found: {patcherFilePath}");
             return 103;
         }
 
-        Out.INFO("PATCHER", "white", "Applying patch to file...");
+        Out.INFO("PATCHER", "gray", "Applying patch to file...");
 
         try
         {
             using var jsonStream = File.OpenRead(patcherFilePath);
             using var doc = JsonDocument.Parse(jsonStream);
 
-            if (doc.RootElement.TryGetProperty("audio", out var audioElement))
-            {
-                var rawJson = audioElement.GetRawText();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var config = JsonSerializer.Deserialize<AudioImportConfig>(rawJson, options);
-                if (config is not null)
-                {
-                    Out.INFO("PATCHER", "white", "Importing audio files...");
-                    var audio_result = AudioImporter.Import(data, config);
-                    if (audio_result != 0)
-                    {
-                        return audio_result;
-                    }
-                }
-                else
-                {
-                    Out.WARN("PATCHER", "white", "Failed to deserialize audio config.");
-                }
-            }
-
-            if (doc.RootElement.TryGetProperty("graphics", out var graphicsElement))
-            {
-                var rawJson = graphicsElement.GetRawText();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var graphicsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
-                if (graphicsConfig is not null)
-                {
-                    Out.INFO("PATCHER", "white", "Importing sprites...");
-                    var result = GraphicsImporter.Import(data, graphicsConfig);
-                    if (result != 0)
-                        return result;
-                }
-                else
-                {
-                    Out.WARN("PATCHER", "white", "Failed to deserialize graphics config.");
-                }
-            }
-
-            if (doc.RootElement.TryGetProperty("fonts", out var fontsElement))
-            {
-                var rawJson = fontsElement.GetRawText();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var fontsConfig = JsonSerializer.Deserialize<GraphicsImportConfig>(rawJson, options);
-                if (fontsConfig is not null)
-                {
-                    Out.INFO("PATCHER", "white", "Importing fonts...");
-                    var result = FontsImporter.Import(data, fontsConfig);
-                    if (result != 0)
-                        return result;
-                }
-                else
-                {
-                    Out.WARN("PATCHER", "white", "Failed to deserialize fonts config.");
-                }
-            }
-
-            if (doc.RootElement.TryGetProperty("gml", out var gmlElement))
-            {
-                var rawJson = gmlElement.GetRawText();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var gmlConfig = JsonSerializer.Deserialize<GMLImportConfig>(rawJson, options);
-                if (gmlConfig is not null)
-                {
-                    Out.INFO("PATCHER", "white", "Importing code files...");
-                    var result = GMLImporter.Import(data, gmlConfig);
-                    if (result != 0)
-                        return result;
-                }
-                else
-                {
-                    Out.WARN("PATCHER", "white", "Failed to deserialize GML config.");
-                }
-            }
+            ProcessPatchSections(doc, data);
 
             return 0;
         }
         catch (Exception ex)
         {
-            Out.ERROR("PATCHER", "white", 300, $"Failed to apply patch file: {ex.Message}");
-            Out.INFO("PATCHER", "white", ex.StackTrace);
+            Out.ERROR("PATCHER", "gray", 300, $"Failed to apply patch file: {ex.Message}");
+            Out.INFO("PATCHER", "gray", ex.StackTrace);
             return 300;
         }
+    }
+    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public static int ProcessPatchSections(JsonDocument doc, UndertaleData data)
+    {
+        if (TryProcessSection(doc, "audio", out var audioElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<AudioImportConfig>(audioElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize audio config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing audio files...");
+                return AudioImporter.Import(data, config) switch
+                {
+                    0 => 0,
+                    var result => result
+                };
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 310, $"Audio import failed: {ex.Message}");
+                return 310;
+            }
+        }
+
+        if (TryProcessSection(doc, "graphics", out var graphicsElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<GraphicsImportConfig>(graphicsElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize graphics config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing sprites...");
+                return GraphicsImporter.Import(data, config) switch
+                {
+                    0 => 0,
+                    var result => result
+                };
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 320, $"Graphics import failed: {ex.Message}");
+                return 320;
+            }
+        }
+
+        if (TryProcessSection(doc, "fonts", out var fontsElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<GraphicsImportConfig>(fontsElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize fonts config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing fonts...");
+                return FontsImporter.Import(data, config) switch
+                {
+                    0 => 0,
+                    var result => result
+                };
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 330, $"Fonts import failed: {ex.Message}");
+                return 330;
+            }
+        }
+
+        if (TryProcessSection(doc, "gml", out var gmlElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<GMLImportConfig>(gmlElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize GML config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing code files...");
+                return GMLImporter.Import(data, config) switch
+                {
+                    0 => 0,
+                    var result => result
+                };
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 340, $"GML import failed: {ex.Message}");
+                return 340;
+            }
+        }
+
+        return 0;
+    }
+
+    private static bool TryProcessSection(JsonDocument doc, string sectionName, out JsonElement element)
+    {
+        return doc.RootElement.TryGetProperty(sectionName, out element);
     }
 }

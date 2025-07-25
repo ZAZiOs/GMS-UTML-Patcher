@@ -50,7 +50,7 @@ public class FontsImporter
         string outName = Path.Combine(tempFolder, "atlas.txt");
 
         ImportFontsBase.Packer packer = new ImportFontsBase.Packer();
-        packer.Process(importFolder, config.searchPattern, config.textureSize, config.paddingBetweenImages, config.debug);
+        packer.Process(importFolder, config.searchPattern, config.textureSize, config.paddingBetweenImages);
         packer.SaveAtlasses(outName);
         
         Out.INFO("FONTS", "cyan", $"Atlases saved to: {outName}");
@@ -101,7 +101,7 @@ public class FontsImporter
                             ImportFontsBase.fontUpdate(newFont);
                             newFont.Texture = texturePageItem;
                             CurrentData.Fonts.Add(newFont);
-                            if (config.debug)
+                            if (config.verboseLevel >= 1)
                                 Out.VERBOSE("FONTS", "cyan", $"Added new font: {spriteName}");
                         }
                         catch (Exception ex)
@@ -115,7 +115,7 @@ public class FontsImporter
                     {
                         ImportFontsBase.fontUpdate(font);
                         font.Texture = texturePageItem;
-                        if (config.debug)
+                        if (config.verboseLevel >= 1)
                             Out.VERBOSE("FONTS", "cyan", $"Updated font: {spriteName}");
                     }
                     catch (Exception ex)
@@ -126,7 +126,21 @@ public class FontsImporter
             }
             atlasCount++;
         }
-        
+        try 
+        {
+            if (!config.saveTemp) 
+            {
+                Directory.Delete(tempFolder, recursive: true);
+            }
+            else 
+            {
+                Out.SKIP("FONTS", "cyan", "Skipping deletion of temp folder. [As stated in config]");
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) 
+        {
+            throw new Exception($"Failed to delete temp folder: {ex.Message}");
+        }
         Out.SUCCESS("FONTS", "cyan", "Font import completed successfully");
         return 0;
     }
@@ -254,7 +268,6 @@ public class ImportFontsBase
         public StringWriter Error;
         public int Padding;
         public int AtlasSize;
-        public bool DebugMode;
         public BestFitHeuristic FitHeuristic;
         public List<Atlas> Atlasses;
 
@@ -265,11 +278,10 @@ public class ImportFontsBase
             Error = new StringWriter();
         }
 
-        public void Process(string _SourceDir, string _Pattern, int _AtlasSize, int _Padding, bool _DebugMode)
+        public void Process(string _SourceDir, string _Pattern, int _AtlasSize, int _Padding)
         {
             Padding = _Padding;
             AtlasSize = _AtlasSize;
-            DebugMode = _DebugMode;
             //1: scan for all the textures we need to pack
             ScanForTextures(_SourceDir, _Pattern);
             List<TextureInfo> textures = new List<TextureInfo>();

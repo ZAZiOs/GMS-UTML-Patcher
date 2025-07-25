@@ -33,32 +33,61 @@ public static class TestFileValidator
 
             Out.INFO("CHECKS", "blue", "Starting checks.");
 
-            // Сравниваем поля
-            bool success = true;
-
-            success &= CheckField("Name", game.GeneralInfo.Name.Content, checks);
-            success &= CheckField("GMS2", game.IsGameMaker2(), checks);
-            success &= CheckField("YYC", game.IsYYC(), checks);
+            if (!CheckField("Name", game.GeneralInfo.Name.Content, checks) ||
+                !CheckField("GMS2", game.IsGameMaker2(), checks) ||
+                !CheckField("YYC", game.IsYYC(), checks))
+            {
+                Out.ERROR("CHECKS", "blue", 202, "Basic check failed (Name, GMS2, or YYC mismatch).");
+                return 202;
+            }
 
             if (!arguments.SkipTimestampCheck)
             {
-                if (!CheckField("buildTimestamp", game.GeneralInfo.Timestamp, checks))
+                if (checks.TryGetPropertyValue("buildTimestamp", out var timestampNode) && 
+                    timestampNode is JsonValue expectedTimestamp)
                 {
-                    return 202;
+                    const int TIMESTAMP_OFFSET = 86399; 
+                    ulong expectedTs = expectedTimestamp.GetValue<ulong>();
+                    ulong actualTs = game.GeneralInfo.Timestamp;
+                    
+                    if (actualTs != expectedTs)
+                    {
+                        string expectedDate = DateTimeOffset.FromUnixTimeSeconds((long)(expectedTs + TIMESTAMP_OFFSET)).ToString("yyyy.MM.dd HH:mm");
+                        string actualDate = DateTimeOffset.FromUnixTimeSeconds((long)(actualTs + TIMESTAMP_OFFSET)).ToString("yyyy.MM.dd HH:mm");
+                        
+                        Out.FAIL("CHECKS", "blue",
+                            $"Timestamp mismatch:\n" +
+                            $"Expected: {expectedDate} (Unix: {expectedTs})\n" +
+                            $"Actual:   {actualDate} (Unix: {actualTs})");
+                        Out.INFO("CHECKS", "blue", "To skip timestamp check use --skip-timestamp, to update it use --make-checks");
+                        return 203;
+                    }
                 }
-            }
-            else
-                Out.SKIP("CHECKS", "blue", "Skipping timestamp check.");
-
-            if (!arguments.SkipHashCheck)
-            {
-                if (!CheckField("SHA256", TestFileCommon.ComputeSha256(dataPath), checks))
+                else
                 {
+                    Out.ERROR("CHECKS", "blue", 203, "Missing or invalid 'buildTimestamp' in checks.");
                     return 203;
                 }
             }
             else
+            {
+                Out.SKIP("CHECKS", "blue", "Skipping timestamp check.");
+            }
+
+            if (!arguments.SkipHashCheck)
+            {
+                string actualHash = TestFileCommon.ComputeSha256(dataPath);
+                if (!CheckField("SHA256", actualHash, checks))
+                {
+                    Out.FAIL("CHECKS", "blue", $"Hash mismatch: expected SHA256 does not match actual.");
+                    Out.INFO("CHECKS", "blue", "To skip SHA256 check use --skip-hashcheck, to update it use --make-checks");
+                    return 204;
+                }
+            }
+            else
+            {
                 Out.SKIP("CHECKS", "blue", "Skipping SHA256 check.");
+            }
 
             return 0;
         }
@@ -82,9 +111,6 @@ public static class TestFileValidator
             var expectedValue = expectedNode.Deserialize<T>();
             if (!Equals(actualValue, expectedValue))
             {
-                Out.FAIL("CHECKS", "blue", $"{field} mismatch: expected '{expectedValue}', got '{actualValue}'");
-                Out.INFO("CHECKS", "blue", "To skip SHA256 check - pass --skip-hashcheck");
-                Out.INFO("CHECKS", "blue", "To skip Timestamp check - pass --skip-timecheck");
                 return false;
             }
             Out.PASS("CHECKS", "blue", $"{field} OK");

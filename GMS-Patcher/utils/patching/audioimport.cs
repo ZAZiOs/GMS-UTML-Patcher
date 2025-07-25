@@ -29,7 +29,7 @@ public static class AudioImporter
         string importFolder = PatchFile.GetRelativePath(config.Directory);
         if (!Directory.Exists(importFolder))
         {
-            Out.ERROR("AUDIO", "red", 311, $"Import folder doesn't exist: {importFolder}");
+            Out.ERROR("AUDIO", "magenta", 311, $"Import folder doesn't exist: {importFolder}");
             return 311;
         }
 
@@ -45,12 +45,12 @@ public static class AudioImporter
         bool hasGroups = data.AudioGroups.Count > 0;
         int groupID = -1;
 
-        Out.INFO("AUDIO", "red", $"Import from: {importFolder} ({dirFiles.Length} files)");
+        Out.INFO("AUDIO", "magenta", $"Import from: {importFolder} ({dirFiles.Length} files)");
 
         foreach (var file in dirFiles)
         {
             var filename = Path.GetFileName(file);
-            if (!filename.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) &&
+            if (/*!filename.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) &&  temporarly disabled because of issues with ogg files */
                 !filename.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -67,7 +67,7 @@ public static class AudioImporter
             bool useGroup = embed && hasGroups && !string.IsNullOrEmpty(grpName);
 
             var existing = data.Sounds.FirstOrDefault(s => s?.Name?.Content == name);
-            Out.INFO("AUDIO", "red", existing != null 
+            Out.INFO("AUDIO", "magenta", existing != null 
                 ? $"Replacing: {name}" 
                 : $"Adding: {name}");
 
@@ -150,7 +150,7 @@ public static class AudioImporter
             }
         }
 
-        Out.SUCCESS("AUDIO", "red", "Import completed successfully");
+        Out.SUCCESS("AUDIO", "magenta", "Import completed successfully");
         return 0;
     }
 }
