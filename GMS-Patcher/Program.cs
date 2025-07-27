@@ -8,58 +8,60 @@ class Program
     public static Arguments? arguments;
     static int Main(string[] args)
     {
+        Out.Copyright();
         try
         {
             arguments = Arguments.Parse(args);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR 2] Failed to parse arguments: {ex.Message}");
+            Out.ERROR("ARGUMENTS", "gray", 2, $"Failed to parse arguments: {ex.Message}");
             return 2;
         }
 
         if (Debug)
         {
-            Console.WriteLine($"DataPath: {arguments.DataPath}");
-            Console.WriteLine($"OutputPath: {arguments.OutputPath}");
-            Console.WriteLine($"Patcher: {arguments.PatcherFile}");
-            Console.WriteLine($"SkipTimestampCheck: {arguments.SkipTimestampCheck}");
-            Console.WriteLine($"SkipHashCheck: {arguments.SkipHashCheck}");
-            Console.WriteLine($"TestMode: {arguments.TestMode}");
-            Console.WriteLine($"PatcherMode: {arguments.PatcherMode}");
+            Out.INFO("DEBUG", "red", $"DataPath: {arguments.DataPath}");
+            Out.INFO("DEBUG", "red", $"OutputPath: {arguments.OutputPath}");
+            Out.INFO("DEBUG", "red", $"Patcher: {arguments.PatcherFile}");
+            Out.INFO("DEBUG", "red", $"SkipTimestampCheck: {arguments.SkipTimestampCheck}");
+            Out.INFO("DEBUG", "red", $"SkipHashCheck: {arguments.SkipHashCheck}");
+            Out.INFO("DEBUG", "red", $"TestMode: {arguments.TestMode}");
+            Out.INFO("DEBUG", "red", $"PatcherMode: {arguments.PatcherMode}");
+            Console.WriteLine();
         }
 
         if (string.IsNullOrEmpty(arguments.DataPath))
         {
-            Console.WriteLine("[ERROR 10] --data-path is required.");
+            Out.ERROR("ARGUMENTS", "gray", 10, "--data-path is required.");
             return 10;
         }
 
         if (string.IsNullOrEmpty(arguments.PatcherFile))
         {
-            Console.WriteLine("[ERROR 11] --patcher-file is required.");
+            Out.ERROR("ARGUMENTS", "gray", 11, "--patcher-file is required.");
             return 11;
         }
 
         if (!File.Exists(arguments.DataPath))
         {
-            Console.WriteLine($"[ERROR 100] File not found: {arguments.DataPath}");
+            Out.ERROR("INPUT", "gray", 100, $"File not found: {arguments.DataPath}");
             return 100;
         }
 
         UndertaleData data;
         try
         {
-            Console.WriteLine($"[INFO] Loading data.win from: {arguments.DataPath}");
+            Out.INFO("INPUT", "gray", $"Loading data.win from: {arguments.DataPath}");
             using var stream = File.OpenRead(arguments.DataPath);
 
             data = UndertaleIO.Read(stream);
 
-            Console.WriteLine("[SUCCESS] Loaded data.win successfully.");
+            Out.SUCCESS("INPUT", "gray", "Loaded data.win successfully.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR 102] Failed to load data.win: {ex.Message}");
+            Out.ERROR("INPUT", "gray", 102, $"Failed to load data.win: {ex.Message}");
             return 102;
         }
 
@@ -73,26 +75,26 @@ class Program
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR 20] Failed to generate/update checks in file: {ex.Message}");
+                Out.ERROR("CHECKS", "blue", 20, $"Failed to generate/update checks in file: {ex.Message}");
                 return 20;
             }
         }
 
         if (!File.Exists(arguments.PatcherFile))
         {
-            Console.WriteLine($"[ERROR 103] Patcher file not found: {arguments.PatcherFile}");
+            Out.ERROR("INPUT", "gray", 103, $"Patcher file not found: {arguments.PatcherFile}");
             return 103;
         }
 
         int valid = TestFileValidator.Validate(arguments.DataPath, data, arguments);
         if (valid != 0)
         {
-            Console.WriteLine($"[ERROR {valid}] Test file validation failed.");
+            Out.ERROR("CHECKS", "blue", valid, "Test file validation failed");
             return valid;
         }
         else
         {
-            Console.WriteLine("[SUCCESS] File validated successfully.");
+            Out.SUCCESS("CHECKS", "blue", "File validated successfully.");
         }
 
 
@@ -104,14 +106,14 @@ class Program
 
         try
         {
-            Console.WriteLine($"[INFO] Saving patched data to: {arguments.OutputPath}");
-            using var outStream = File.Create(arguments.OutputPath);
+            Out.INFO("OUTPUT", "gray", $"Saving patched data to: {arguments.OutputPath}");
+            using var outStream = File.Create(arguments.OutputPath!);
             UndertaleIO.Write(outStream, data);
-            Console.WriteLine("[SUCCESS] Data saved successfully.");
+            Out.SUCCESS("OUTPUT", "gray", "Data saved successfully.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR 104] Failed to save patched data: {ex.Message}");
+            Out.ERROR("OUTPUT", "gray", 104, $"Failed to save patched data: {ex.Message}");
             return 104;
         }
 

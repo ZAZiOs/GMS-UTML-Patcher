@@ -2,14 +2,14 @@ using System;
 
 public class Arguments
 {
-    public string DataPath { get; set; }
-    public string OutputPath { get; set; }
-    public string PatcherFile { get; set; }
-    public bool SkipTimestampCheck { get; set; }
-    public bool SkipHashCheck { get; set; }
-    public bool TestMode { get; set; }
+    public string? DataPath { get; set; }
+    public string? OutputPath { get; set; }
+    public string? PatcherFile { get; set; }
+    public bool SkipTimestampCheck { get; set; } = false;
+    public bool SkipHashCheck { get; set; } = false;
+    public bool TestMode { get; set; } = false;
 
-    public string PatcherMode => PatcherFile != null ? "enabled" : null;
+    public string? PatcherMode => PatcherFile != null ? "enabled" : null;
 
     public static Arguments Parse(string[] args)
     {

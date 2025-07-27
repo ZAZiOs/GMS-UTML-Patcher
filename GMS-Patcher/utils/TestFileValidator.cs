@@ -10,13 +10,13 @@ public static class TestFileValidator
     {
         if (string.IsNullOrEmpty(arguments.PatcherFile))
         {
-            Console.WriteLine("[ERROR 11] No patch file provided.");
+            Out.ERROR("CHECKS", "blue", 11, "No patch file provided.");
             return 11;
         }
 
         if (!File.Exists(arguments.PatcherFile))
         {
-            Console.WriteLine($"[ERROR 103] Patch file not found: {arguments.PatcherFile}");
+            Out.ERROR("CHECKS", "blue", 103, $"Patch file not found: {arguments.PatcherFile}");
             return 103;
         }
 
@@ -27,44 +27,73 @@ public static class TestFileValidator
 
             if (root is null || !root.TryGetPropertyValue("checks", out var checksNode) || checksNode is not JsonObject checks)
             {
-                Console.WriteLine("[ERROR 201] Invalid or missing 'checks' object in test file.");
+                Out.ERROR("CHECKS", "blue", 201, "Invalid or missing 'checks' object in test file.");
                 return 201;
             }
 
-            Console.WriteLine("[INFO] Starting checks.");
+            Out.INFO("CHECKS", "blue", "Starting checks.");
 
-            // Сравниваем поля
-            bool success = true;
-
-            success &= CheckField("Name", game.GeneralInfo.Name.Content, checks);
-            success &= CheckField("GMS2", game.IsGameMaker2(), checks);
-            success &= CheckField("YYC", game.IsYYC(), checks);
+            if (!CheckField("Name", game.GeneralInfo.Name.Content, checks) ||
+                !CheckField("GMS2", game.IsGameMaker2(), checks) ||
+                !CheckField("YYC", game.IsYYC(), checks))
+            {
+                Out.ERROR("CHECKS", "blue", 202, "Basic check failed (Name, GMS2, or YYC mismatch).");
+                return 202;
+            }
 
             if (!arguments.SkipTimestampCheck)
             {
-                if (!CheckField("buildTimestamp", game.GeneralInfo.Timestamp, checks))
+                if (checks.TryGetPropertyValue("buildTimestamp", out var timestampNode) && 
+                    timestampNode is JsonValue expectedTimestamp)
                 {
-                    return 202;
+                    const int TIMESTAMP_OFFSET = 86399; 
+                    ulong expectedTs = expectedTimestamp.GetValue<ulong>();
+                    ulong actualTs = game.GeneralInfo.Timestamp;
+                    
+                    if (actualTs != expectedTs)
+                    {
+                        string expectedDate = DateTimeOffset.FromUnixTimeSeconds((long)(expectedTs + TIMESTAMP_OFFSET)).ToString("yyyy.MM.dd HH:mm");
+                        string actualDate = DateTimeOffset.FromUnixTimeSeconds((long)(actualTs + TIMESTAMP_OFFSET)).ToString("yyyy.MM.dd HH:mm");
+                        
+                        Out.FAIL("CHECKS", "blue",
+                            $"Timestamp mismatch:\n" +
+                            $"Expected: {expectedDate} (Unix: {expectedTs})\n" +
+                            $"Actual:   {actualDate} (Unix: {actualTs})");
+                        Out.INFO("CHECKS", "blue", "To skip timestamp check use --skip-timestamp, to update it use --make-checks");
+                        return 203;
+                    }
                 }
-            }
-            else
-                Console.WriteLine("[INFO] Skipping timestamp check.");
-
-            if (!arguments.SkipHashCheck)
-            {
-                if (!CheckField("SHA256", TestFileCommon.ComputeSha256(dataPath), checks))
+                else
                 {
+                    Out.ERROR("CHECKS", "blue", 203, "Missing or invalid 'buildTimestamp' in checks.");
                     return 203;
                 }
             }
             else
-                Console.WriteLine("[INFO] Skipping SHA256 check.");
+            {
+                Out.SKIP("CHECKS", "blue", "Skipping timestamp check.");
+            }
+
+            if (!arguments.SkipHashCheck)
+            {
+                string actualHash = TestFileCommon.ComputeSha256(dataPath);
+                if (!CheckField("SHA256", actualHash, checks))
+                {
+                    Out.FAIL("CHECKS", "blue", $"Hash mismatch: expected SHA256 does not match actual.");
+                    Out.INFO("CHECKS", "blue", "To skip SHA256 check use --skip-hashcheck, to update it use --make-checks");
+                    return 204;
+                }
+            }
+            else
+            {
+                Out.SKIP("CHECKS", "blue", "Skipping SHA256 check.");
+            }
 
             return 0;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Failed to validate test file: {ex.Message}");
+            Out.ERROR("CHECKS", "blue", 200, $"Failed to validate test file: {ex.Message}");
             return 200;
         }
     }
@@ -73,7 +102,7 @@ public static class TestFileValidator
     {
         if (!checks.TryGetPropertyValue(field, out var expectedNode))
         {
-            Console.WriteLine($"[FAIL] Field '{field}' missing in test file.");
+            Out.FAIL("CHECKS", "blue", $"Field '{field}' missing in test file.");
             return false;
         }
 
@@ -82,16 +111,14 @@ public static class TestFileValidator
             var expectedValue = expectedNode.Deserialize<T>();
             if (!Equals(actualValue, expectedValue))
             {
-                Console.WriteLine($"[FAIL] {field} mismatch: expected '{expectedValue}', got '{actualValue}'");
                 return false;
             }
-
-            Console.WriteLine($"[PASS] {field} OK");
+            Out.PASS("CHECKS", "blue", $"{field} OK");
             return true;
         }
         catch
         {
-            Console.WriteLine($"[FAIL] Could not deserialize or compare '{field}'.");
+            Out.FAIL("CHECKS", "blue", $"Could not deserialize or compare '{field}'.");
             return false;
         }
     }
