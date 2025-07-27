@@ -45,7 +45,7 @@ public static class PatchFile
         catch (Exception ex)
         {
             Out.ERROR("PATCHER", "gray", 300, $"Failed to apply patch file: {ex.Message}");
-            Out.INFO("PATCHER", "gray", ex.StackTrace);
+            Out.INFO("PATCHER", "gray", ex.StackTrace ?? string.Empty);
             return 300;
         }
     }
@@ -69,11 +69,8 @@ public static class PatchFile
                 }
 
                 Out.INFO("PATCHER", "gray", "Importing audio files...");
-                return AudioImporter.Import(data, config) switch
-                {
-                    0 => 0,
-                    var result => result
-                };
+                int result = AudioImporter.Import(data, config);
+                if (result != 0) return result;
             }
             catch (Exception ex)
             {
@@ -94,11 +91,8 @@ public static class PatchFile
                 }
 
                 Out.INFO("PATCHER", "gray", "Importing sprites...");
-                return GraphicsImporter.Import(data, config) switch
-                {
-                    0 => 0,
-                    var result => result
-                };
+                int result = GraphicsImporter.Import(data, config);
+                if (result != 0) return result;
             }
             catch (Exception ex)
             {
@@ -119,11 +113,9 @@ public static class PatchFile
                 }
 
                 Out.INFO("PATCHER", "gray", "Importing fonts...");
-                return FontsImporter.Import(data, config) switch
-                {
-                    0 => 0,
-                    var result => result
-                };
+
+                int result = FontsImporter.Import(data, config);
+                if (result != 0) return result;
             }
             catch (Exception ex)
             {
@@ -144,11 +136,8 @@ public static class PatchFile
                 }
 
                 Out.INFO("PATCHER", "gray", "Importing code files...");
-                return GMLImporter.Import(data, config) switch
-                {
-                    0 => 0,
-                    var result => result
-                };
+                int result = GMLImporter.Import(data, config);
+                if (result != 0) return result;
             }
             catch (Exception ex)
             {

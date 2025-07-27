@@ -40,7 +40,15 @@ public static class TestFileGenerator
 
         var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(outputPath, json);
-        var checks = root["checks"].ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        Console.WriteLine(checks);
+        var checksNode = root["checks"];
+        if (checksNode != null)
+        {
+            var checks = checksNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+            Console.WriteLine(checks);
+        }
+        else
+        {
+            Console.WriteLine("'checks' node is missing or null.");
+        }
     }
 }

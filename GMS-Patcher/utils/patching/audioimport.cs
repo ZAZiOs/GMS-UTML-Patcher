@@ -6,10 +6,10 @@ using System.Linq;
 
 public class AudioImportConfig
 {
-    public string Directory { get; set; } = "";
+    public required string Directory { get; set; }
     public bool ReplaceProperties { get; set; } = false;
-    public bool Embed { get; set; } = false;
-    public bool Decode { get; set; } = false;
+    public bool Embed { get; set; } = true;
+    public bool Decode { get; set; } = true;
     public bool UseFolderAsAudioGroup { get; set; } = false;
     public bool ManuallyConfigureEach { get; set; } = false;
     public Dictionary<string, AudioFileConfig>? Files { get; set; }
@@ -26,7 +26,7 @@ public static class AudioImporter
 {
     public static int Import(UndertaleData data, AudioImportConfig config)
     {
-        string importFolder = PatchFile.GetRelativePath(config.Directory);
+        string? importFolder = PatchFile.GetRelativePath(config.Directory);
         if (!Directory.Exists(importFolder))
         {
             Out.ERROR("AUDIO", "magenta", 311, $"Import folder doesn't exist: {importFolder}");
@@ -50,7 +50,7 @@ public static class AudioImporter
         foreach (var file in dirFiles)
         {
             var filename = Path.GetFileName(file);
-            if (/*!filename.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) &&  temporarly disabled because of issues with ogg files */
+            if (!filename.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) &&
                 !filename.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
                 continue;
 

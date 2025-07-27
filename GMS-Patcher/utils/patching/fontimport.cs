@@ -15,39 +15,33 @@ using ImageMagick;
 
 public class FontsImporter
 {
-    public static GraphicsImportConfig CurrentConfig { get; private set; }
-    public static UndertaleData CurrentData { get; private set; }
+    public static GraphicsImportConfig? CurrentConfig { get; private set; }
+    public static UndertaleData? CurrentData { get; private set; }
     
     public static int Import(UndertaleData Data, GraphicsImportConfig config)
     {
         CurrentConfig = config;
         CurrentData = Data;
-        
-        if (string.IsNullOrEmpty(config.directory))
-        {
-            Out.ERROR("FONTS", "cyan", 1, "Import directory is not set");
-            return 1;
-        }
 
-        string importFolder = PatchFile.GetRelativePath(config.directory);
+        string? importFolder = PatchFile.GetRelativePath(config.directory);
         if (!Directory.Exists(importFolder))
         {
-            Out.ERROR("FONTS", "cyan", 301, $"Import folder doesn't exist: {importFolder}");
-            return 301;
+            Out.ERROR("FONTS", "cyan", 331, $"Import folder doesn't exist: {importFolder}");
+            return 331;
         }
 
         var dirFiles = Directory.GetFiles(importFolder, config.searchPattern);
         if (dirFiles.Length == 0)
         {
-            Out.ERROR("FONTS", "cyan", 302, "The selected folder is empty or doesn't contain any images");
-            return 302;
+            Out.ERROR("FONTS", "cyan", 332, "The selected folder is empty or doesn't contain any images");
+            return 332;
         }
 
         Out.INFO("FONTS", "cyan", $"Importing from: {importFolder} ({dirFiles.Length} files)");
 
-        string tempFolder = PatchFile.GetRelativePath(config.tempFolder);
-        Directory.CreateDirectory(tempFolder);
-        string outName = Path.Combine(tempFolder, "atlas.txt");
+        string? tempFolder = PatchFile.GetRelativePath(config.tempFolder);
+        Directory.CreateDirectory(tempFolder!);
+        string outName = Path.Combine(tempFolder!, "atlas.txt");
 
         ImportFontsBase.Packer packer = new ImportFontsBase.Packer();
         packer.Process(importFolder, config.searchPattern, config.textureSize, config.paddingBetweenImages);
@@ -87,7 +81,7 @@ public class FontsImporter
                     texturePageItem.TexturePage = texture;
                     CurrentData.TexturePageItems.Add(texturePageItem);
                     
-                    string spriteName = Path.GetFileNameWithoutExtension(n.Texture.Source);
+                    string? spriteName = Path.GetFileNameWithoutExtension(n.Texture.Source);
                     UndertaleFont font = CurrentData.Fonts.ByName(spriteName);
 
                     if (font == null)
@@ -106,7 +100,7 @@ public class FontsImporter
                         }
                         catch (Exception ex)
                         {
-                            Out.ERROR("FONTS", "cyan", 303, $"Failed to add font {spriteName}: {ex.Message}");
+                            Out.ERROR("FONTS", "cyan", 0, $"Failed to add font {spriteName}: {ex.Message}");
                         }
                         continue;
                     }
@@ -120,7 +114,7 @@ public class FontsImporter
                     }
                     catch (Exception ex)
                     {
-                        Out.ERROR("FONTS", "cyan", 304, $"Failed to update font {spriteName}: {ex.Message}");
+                        Out.ERROR("FONTS", "cyan", 0, $"Failed to update font {spriteName}: {ex.Message}");
                     }
                 }
             }
@@ -130,7 +124,7 @@ public class FontsImporter
         {
             if (!config.saveTemp) 
             {
-                Directory.Delete(tempFolder, recursive: true);
+                Directory.Delete(tempFolder!, recursive: true);
             }
             else 
             {
@@ -150,67 +144,65 @@ public class ImportFontsBase
 {
     public static void fontUpdate(UndertaleFont newFont)
     {
-        using (StreamReader reader = new StreamReader(Path.Combine(PatchFile.GetRelativePath(FontsImporter.CurrentConfig.directory), $"glyphs_{newFont.Name.Content}.csv")))
+        using StreamReader reader = new StreamReader(Path.Combine(PatchFile.GetRelativePath(FontsImporter.CurrentConfig.directory!)!, $"glyphs_{newFont.Name.Content}.csv")!);
+        newFont.Glyphs.Clear();
+        string? line;
+        int head = 0;
+        bool hadError = false;
+        while ((line = reader.ReadLine()) != null)
         {
-            newFont.Glyphs.Clear();
-            string line;
-            int head = 0;
-            bool hadError = false;
-            while ((line = reader.ReadLine()) != null)
+            string[] s = line.Split(';');
+
+            // Skip blank lines like ";;;;;;;"
+            if (s.All(x => x.Length == 0))
+                continue;
+
+            try
             {
-                string[] s = line.Split(';');
-
-                // Skip blank lines like ";;;;;;;"
-                if (s.All(x => x.Length == 0))
-                    continue;
-
-                try
+                if (head == 1)
                 {
-                    if (head == 1)
-                    {
-                        newFont.RangeStart = UInt16.Parse(s[0]);
-                        head++;
-                    }
-
-                    if (head == 0)
-                    {
-                        String namae = s[0].Replace("\"", "");
-                        newFont.DisplayName = FontsImporter.CurrentData.Strings.MakeString(namae);
-                        newFont.EmSize = UInt16.Parse(s[1]);
-                        newFont.Bold = Boolean.Parse(s[2]);
-                        newFont.Italic = Boolean.Parse(s[3]);
-                        newFont.Charset = Byte.Parse(s[4]);
-                        newFont.AntiAliasing = Byte.Parse(s[5]);
-                        newFont.ScaleX = UInt16.Parse(s[6]);
-                        newFont.ScaleY = UInt16.Parse(s[7]);
-                        head++;
-                    }
-
-                    if (head > 1)
-                    {
-                        newFont.Glyphs.Add(new UndertaleFont.Glyph()
-                        {
-                            Character = UInt16.Parse(s[0]),
-                            SourceX = UInt16.Parse(s[1]),
-                            SourceY = UInt16.Parse(s[2]),
-                            SourceWidth = UInt16.Parse(s[3]),
-                            SourceHeight = UInt16.Parse(s[4]),
-                            Shift = Int16.Parse(s[5]),
-                            Offset = Int16.Parse(s[6]),
-                        });
-                        newFont.RangeEnd = UInt32.Parse(s[0]);
-                    }
+                    newFont.RangeStart = UInt16.Parse(s[0]);
+                    head++;
                 }
-                catch
+
+                if (head == 0)
                 {
-                    hadError = true;
+                    String namae = s[0].Replace("\"", "");
+                    newFont.DisplayName = FontsImporter.CurrentData.Strings.MakeString(namae);
+                    newFont.EmSize = UInt16.Parse(s[1]);
+                    newFont.Bold = Boolean.Parse(s[2]);
+                    newFont.Italic = Boolean.Parse(s[3]);
+                    newFont.Charset = Byte.Parse(s[4]);
+                    newFont.AntiAliasing = Byte.Parse(s[5]);
+                    newFont.ScaleX = UInt16.Parse(s[6]);
+                    newFont.ScaleY = UInt16.Parse(s[7]);
+                    head++;
+                }
+
+                if (head > 1)
+                {
+                    newFont.Glyphs.Add(new UndertaleFont.Glyph()
+                    {
+                        Character = UInt16.Parse(s[0]),
+                        SourceX = UInt16.Parse(s[1]),
+                        SourceY = UInt16.Parse(s[2]),
+                        SourceWidth = UInt16.Parse(s[3]),
+                        SourceHeight = UInt16.Parse(s[4]),
+                        Shift = Int16.Parse(s[5]),
+                        Offset = Int16.Parse(s[6]),
+                    });
+                    newFont.RangeEnd = UInt32.Parse(s[0]);
                 }
             }
-
-            if (hadError)
+            catch
             {
-                throw new InvalidDataException($"File \"glyphs_{newFont.Name.Content}.csv\" contained some invalid data. Please check the format and try again.");
+                hadError = true;
             }
+        }
+
+        if (hadError)
+        {
+            throw new InvalidDataException($"File \"glyphs_{newFont.Name.Content}.csv\" contained some invalid data. Please check the format and try again.");
         }
     }
 
@@ -230,7 +222,7 @@ public class ImportFontsBase
 
     public class TextureInfo
     {
-        public string Source;
+        public string? Source;
         public int Width;
         public int Height;
     }
@@ -250,7 +242,7 @@ public class ImportFontsBase
     public class Node
     {
         public Rectangle Bounds;
-        public TextureInfo Texture;
+        public TextureInfo? Texture;
         public SplitType SplitType;
     }
 
@@ -258,7 +250,7 @@ public class ImportFontsBase
     {
         public int Width;
         public int Height;
-        public List<Node> Nodes;
+        public List<Node>? Nodes;
     }
 
     public class Packer
@@ -269,7 +261,7 @@ public class ImportFontsBase
         public int Padding;
         public int AtlasSize;
         public BestFitHeuristic FitHeuristic;
-        public List<Atlas> Atlasses;
+        public List<Atlas>? Atlasses;
 
         public Packer()
         {
@@ -416,9 +408,9 @@ public class ImportFontsBase
                 _List.Add(n2);
         }
 
-        private TextureInfo FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
+        private TextureInfo? FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
         {
-            TextureInfo bestFit = null;
+            TextureInfo? bestFit = null;
             float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
             float maxCriteria = 0.0f;
             foreach (TextureInfo ti in _Textures)
@@ -471,7 +463,7 @@ public class ImportFontsBase
             {
                 Node node = freeList[0];
                 freeList.RemoveAt(0);
-                TextureInfo bestFit = FindBestFitForNode(node, textures);
+                TextureInfo? bestFit = FindBestFitForNode(node, textures);
                 if (bestFit != null)
                 {
                     if (node.SplitType == SplitType.Horizontal)
@@ -500,7 +492,7 @@ public class ImportFontsBase
             {
                 if (n.Texture != null)
                 {
-                    using (MagickImage src = new(n.Texture.Source))
+                    using (MagickImage src = new(n.Texture.Source!))
                     {
                         atlas.Composite(src, n.Bounds.X, n.Bounds.Y, CompositeOperator.Over);
                     }

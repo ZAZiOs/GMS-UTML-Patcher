@@ -39,7 +39,7 @@ public class GraphicsImportConfig
 
 public class GraphicsImporter
 {
-    public static GraphicsImportConfig CurrentConfig { get; private set; }
+    public static GraphicsImportConfig? CurrentConfig { get; private set; }
     public static List<MagickImage> imagesToCleanup = new();
     public static int Import(UndertaleData Data, GraphicsImportConfig config)
     {
@@ -48,19 +48,53 @@ public class GraphicsImporter
 
         ImportGraphicsBase.sprFrameRegex = new Regex(config.sprFrameRegex, RegexOptions.Compiled);
         string importFolder = ImportGraphicsBase.CheckValidity();
-        if (!Directory.Exists(importFolder))
+        switch (importFolder)
         {
-            Out.ERROR("GRAPHICS", "green", 311, $"Import folder doesn't exist: {importFolder}");
-            return 311;
+            case "err_no_config":
+                Out.ERROR("GRAPHICS", "green", 11, $"Patcher file not found");
+                return 320;
+            case "err_no_import_folder":
+                Out.ERROR("GRAPHICS", "green", 321, $"Path to import folder is unacceptable");
+                return 321;
+            case string s when s.StartsWith("err_duplicate_file_count_"):
+                var parts = s.Split('_');
+                int count = int.Parse(parts[5]);
+                string fileName = parts[6];
+                Out.ERROR("GRAPHICS", "green", 322, $"Duplicate file found ({count} instances): {fileName}");
+                return 322;
+            case string s when s.StartsWith("err_invalid_frame_index_"):
+                fileName = s.Split('_')[5];
+                Out.ERROR("GRAPHICS", "green", 323, $"Invalid frame index in file: {fileName}");
+                return 323;
+            case string s when s.StartsWith("err_negative_frame_index_"):
+                fileName = s.Split('_')[5];
+                Out.ERROR("GRAPHICS", "green", 324, $"Negative frame index in file: {fileName}");
+                return 324;
+            case string s when s.StartsWith("err_"):
+                if (s.Contains("_missing_frame_index_"))
+                {
+                    string spriteName = s.Split('_')[1];
+                    string missingFrame = s.Split('_')[5];
+                    Out.ERROR("GRAPHICS", "green", 325, $"Missing frame index {missingFrame} for sprite: {spriteName}");
+                    return 325;
+                }
+                Out.ERROR("GRAPHICS", "green", 320, $"Unknown error: {s}");
+                return 320;
         }
 
-        string tempFolder = PatchFile.GetRelativePath(config.tempFolder);
-        Directory.CreateDirectory(tempFolder);
+        if (!Directory.Exists(importFolder))
+        {
+            Out.ERROR("GRAPHICS", "green", 321, $"Import folder doesn't exist: {importFolder}");
+            return 321;
+        }
+
+        string? tempFolder = PatchFile.GetRelativePath(config.tempFolder!);
+        Directory.CreateDirectory(tempFolder!);
 
         if (config.verboseLevel >= 1)
             Out.VERBOSE("GRAPHICS", "green", $"Temp folder created at: {tempFolder}");
 
-        string outName = Path.Combine(tempFolder, "atlas.txt");
+        string outName = Path.Combine(tempFolder!, "atlas.txt");
 
         var importFolderFilesLen = Directory.GetFiles(importFolder).Length;
         if (importFolderFilesLen == 0)
@@ -97,7 +131,7 @@ public class GraphicsImporter
 
         foreach (ImportGraphicsBase.Atlas atlas in packer.Atlasses)
         {
-            string atlasName = Path.Combine(tempFolder, $"{prefix}{atlasCount:000}.png");
+            string atlasName = Path.Combine(tempFolder!, $"{prefix}{atlasCount:000}.png");
             using MagickImage atlasImage = TextureWorker.ReadBGRAImageFromFile(atlasName);
             IPixelCollection<byte> atlasPixels = atlasImage.GetPixels();
 
@@ -176,14 +210,14 @@ public class GraphicsImporter
                         }
                         catch (Exception e)
                         {
-                            Out.ERROR("GRAPHICS", "green", 320, $"Failed to parse sprite name and frame from '{stripped}': {e.Message}");
+                            Out.ERROR("GRAPHICS", "green", 0, $"Failed to parse sprite name and frame from '{stripped}': {e.Message}");
                             continue;
                         }
 
 
                         if (string.IsNullOrEmpty(spriteName))
                         {
-                            Out.ERROR("GRAPHICS", "green", 321, $"Sprite name is empty for file '{stripped}'. Skipping.");
+                            Out.ERROR("GRAPHICS", "green", 0, $"Sprite name is empty for file '{stripped}'. Skipping.");
                             continue;
                         }
 
@@ -309,7 +343,7 @@ public class GraphicsImporter
                 {
                     for (int x = 0; x < maskWidth && x < maskNode.Bounds.Width; x++)
                     {
-                        IMagickColor<byte> pixelColor = atlasPixels.GetPixel(x + maskNode.Bounds.X, y + maskNode.Bounds.Y).ToColor();
+                        IMagickColor<byte>? pixelColor = atlasPixels.GetPixel(x + maskNode.Bounds.X, y + maskNode.Bounds.Y).ToColor();
                         if (bboxMasks)
                         {
                             maskingBitArray[(y * maskStride) + x] = (pixelColor.A > 0);
@@ -351,7 +385,7 @@ public class GraphicsImporter
         {
             if (!config.saveTemp) 
             {
-                Directory.Delete(tempFolder, recursive: true);
+                Directory.Delete(tempFolder!, recursive: true);
             }
             else 
             {
@@ -369,7 +403,7 @@ public class GraphicsImporter
 
 public class ImportGraphicsBase
 {
-    public static Regex sprFrameRegex { get; set; }
+    public static Regex? sprFrameRegex { get; set; }
 
     public class TextureInfo
     {
@@ -414,7 +448,7 @@ public class ImportGraphicsBase
     public class Node
     {
         public Rect Bounds;
-        public TextureInfo Texture;
+        public TextureInfo? Texture;
         public SplitType SplitType;
     }
 
@@ -433,7 +467,7 @@ public class ImportGraphicsBase
         public int Padding;
         public int AtlasSize;
         public BestFitHeuristic FitHeuristic;
-        public List<Atlas> Atlasses;
+        public List<Atlas>? Atlasses;
 
         public Packer()
         {
@@ -638,9 +672,9 @@ public class ImportGraphicsBase
                 _List.Add(n2);
         }
 
-        private TextureInfo FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
+        private TextureInfo? FindBestFitForNode(Node _Node, List<TextureInfo> _Textures)
         {
-            TextureInfo bestFit = null;
+            TextureInfo? bestFit = null;
             float nodeArea = _Node.Bounds.Width * _Node.Bounds.Height;
             float maxCriteria = 0.0f;
             foreach (TextureInfo ti in _Textures)
@@ -694,7 +728,7 @@ public class ImportGraphicsBase
             {
                 Node node = freeList[0];
                 freeList.RemoveAt(0);
-                TextureInfo bestFit = FindBestFitForNode(node, textures);
+                TextureInfo? bestFit = FindBestFitForNode(node, textures);
                 if (bestFit != null)
                 {
                     if (node.SplitType == SplitType.Horizontal)
@@ -723,7 +757,7 @@ public class ImportGraphicsBase
             {
                 if (n.Texture is not null)
                 {
-                    MagickImage sourceImg = n.Texture.Image;
+                    MagickImage? sourceImg = n.Texture.Image;
                     using IMagickImage<byte> resizedSourceImg = TextureWorker.ResizeImage(sourceImg, n.Bounds.Width, n.Bounds.Height);
                     img.Composite(resizedSourceImg, n.Bounds.X, n.Bounds.Y, CompositeOperator.Copy);
                 }
@@ -735,7 +769,7 @@ public class ImportGraphicsBase
 
     public static SpriteType GetSpriteType(string path)
     {
-        string folderPath = Path.GetDirectoryName(path);
+        string? folderPath = Path.GetDirectoryName(path);
         if (string.IsNullOrEmpty(folderPath))
             return SpriteType.Unknown;
         string folderName = new DirectoryInfo(folderPath).Name;
@@ -764,13 +798,13 @@ public class ImportGraphicsBase
             return "err_no_config";
 
         // Get import folder
-        string importFolder = PatchFile.GetRelativePath(GraphicsImporter.CurrentConfig.directory);
+        string? importFolder = PatchFile.GetRelativePath(GraphicsImporter.CurrentConfig.directory);
         if (importFolder == null)
             return "err_no_import_folder";
 
         //Stop the script if there's missing sprite entries or w/e.
         // bool hadMessage = false;
-        string currSpriteName = null;
+        string? currSpriteName = null;
         string[] dirFiles = Directory.GetFiles(importFolder, "*.png", SearchOption.AllDirectories);
         bool warnShown = false;
         foreach (string file in dirFiles)
@@ -791,7 +825,8 @@ public class ImportGraphicsBase
                 }*/
                 if (!GraphicsImporter.CurrentConfig.importUnknownAsSprite)
                 {
-                    if (GraphicsImporter.CurrentConfig.verboseLevel >= 1 && !warnShown){    
+                    if (GraphicsImporter.CurrentConfig.verboseLevel >= 1 && !warnShown)
+                    {
                         Out.VERBOSE("GRAPHICS", "green", $"{FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it's skipped.");
                         warnShown = true;
                     }
@@ -799,7 +834,8 @@ public class ImportGraphicsBase
                 }
                 else
                 {
-                    if (GraphicsImporter.CurrentConfig.verboseLevel >= 1 && !warnShown){
+                    if (GraphicsImporter.CurrentConfig.verboseLevel >= 1 && !warnShown)
+                    {
                         Out.VERBOSE("GRAPHICS", "green", $"{FileNameWithExtension} is in an incorrectly-named folder (valid names being \"Sprites\" and \"Backgrounds\"). Based on your configuration [importUnknownAsSprite] it will be imported as sprite.");
                         warnShown = true;
                     }
@@ -818,7 +854,7 @@ public class ImportGraphicsBase
             {
                 if (sprFrameRegex == null)
                 {
-                    Out.ERROR("GRAPHICS", "green", 330, "sprFrameRegex is null!");
+                    Out.ERROR("GRAPHICS", "green", 322, "sprFrameRegex is null!");
                     return "err_no_regex";
                 }
 

@@ -107,7 +107,7 @@ class Program
         try
         {
             Out.INFO("OUTPUT", "gray", $"Saving patched data to: {arguments.OutputPath}");
-            using var outStream = File.Create(arguments.OutputPath);
+            using var outStream = File.Create(arguments.OutputPath!);
             UndertaleIO.Write(outStream, data);
             Out.SUCCESS("OUTPUT", "gray", "Data saved successfully.");
         }

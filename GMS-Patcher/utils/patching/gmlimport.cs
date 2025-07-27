@@ -28,22 +28,15 @@ public class GMLImporter
 {
     public static int Import(UndertaleData Data, GMLImportConfig config)
     {
-        if (string.IsNullOrEmpty(config.directory))
-        {
-            Out.ERROR("CODE", "yellow", 1, "Import directory is not set");
-            return 1;
-        }
-
         switch (config.importType.ToLower())
         {
             case "basic":
             {
-                string basePath = PatchFile.GetRelativePath(config.directory);
-                string modifiedPath = Path.Combine(basePath, "modified");
+                string? basePath = PatchFile.GetRelativePath(config.directory);
+                string modifiedPath = Path.Combine(basePath!, "modified");
 
                 string[] dirFiles;
 
-                // Если есть папка modified и в ней есть GML-файлы — берем их
                 if (Directory.Exists(modifiedPath) &&
                     Directory.GetFiles(modifiedPath, "*.gml", SearchOption.TopDirectoryOnly).Length > 0)
                 {
@@ -51,38 +44,37 @@ public class GMLImporter
                 }
                 else
                 {
-                    // Иначе берем файлы из базовой папки
                     if (!Directory.Exists(basePath))
                     {
-                        Out.ERROR("CODE", "yellow", 2, "The selected folder does not exist");
-                        return 2;
+                        Out.ERROR("CODE", "yellow", 341, "The import directory does not exist");
+                        return 341; 
                     }
 
                     dirFiles = Directory.GetFiles(basePath, "*.gml", SearchOption.TopDirectoryOnly);
 
                     if (dirFiles.Length == 0)
                     {
-                        Out.ERROR("CODE", "yellow", 3, "The selected folder doesn't contain any GML files");
-                        return 3;
+                        Out.ERROR("CODE", "yellow", 342, "The selected folder doesn't contain any GML files");
+                        return 342;
                     }
                 }
 
                 return BasicGMLImport.ImportGML(Data, dirFiles, config);
             }
             case "merge":
-                if (false /*Program.arguments.SkipHashCheck || Program.arguments.SkipTimestampCheck*/)
+                /*if (false Program.arguments.SkipHashCheck || Program.arguments.SkipTimestampCheck)
                 {
                     return MergeGMLImport.Import(Data, config);
                     // MERGE MODE IS DISABLED BECAUSE OF ITS UNSTABILLITY
                 }
-                else
+                else*/
                 {
-                    string modifiedPath = Path.Combine(PatchFile.GetRelativePath(config.directory), "modified");
+                    string modifiedPath = Path.Combine(PatchFile.GetRelativePath(config.directory)!, "modified");
 
                     if (!Directory.Exists(modifiedPath))
                     {
-                        Out.ERROR("CODE", "yellow", 6, $"Fallback failed: missing modified folder at {modifiedPath}");
-                        return 6;
+                        Out.ERROR("CODE", "yellow", 343, $"Fallback failed: missing modified folder at {modifiedPath}");
+                        return 343;
                     }
 
                     string[] modifiedFiles = Directory.GetFiles(modifiedPath, "*.gml", SearchOption.TopDirectoryOnly);
@@ -90,14 +82,14 @@ public class GMLImporter
                     if (modifiedFiles.Length == 0)
                     {
                         Out.ERROR("CODE", "yellow", 7, "Fallback failed: modified folder is empty");
-                        return 7;
+                        return 344;
                     }
 
                     return BasicGMLImport.ImportGML(Data, modifiedFiles, config);
                 }
             default:
-                Out.ERROR("CODE", "yellow", 4, $"Unknown import type: {config.importType}");
-                return 4;
+                Out.ERROR("CODE", "yellow", 346, $"Unknown import type: {config.importType} [base / merge] allowed");
+                return 346;
         }
     }
 }
@@ -126,7 +118,7 @@ public class BasicGMLImport
             }
             catch (Exception ex)
             {
-                Out.ERROR("CODE", "yellow", 100, $"Failed to read file {Path.GetFileName(file)}: {ex.Message}");
+                Out.ERROR("CODE", "yellow", 0, $"Failed to read file {Path.GetFileName(file)}: {ex.Message}");
             }
         }
 
@@ -138,8 +130,8 @@ public class BasicGMLImport
         }
         catch (Exception ex)
         {
-            Out.ERROR("CODE", "yellow", 101, $"Import failed: {ex.Message}");
-            return 101;
+            Out.ERROR("CODE", "yellow", 347, $"Import failed: {ex.Message}");
+            return 347;
         }
     }
 }
@@ -155,19 +147,19 @@ public static class MergeGMLImport
 {
     public static int Import(UndertaleData Data, GMLImportConfig config)
     {
-        string origPath = Path.Combine(PatchFile.GetRelativePath(config.directory), "original");
-        string modPath = Path.Combine(PatchFile.GetRelativePath(config.directory), "modified");
+        string origPath = Path.Combine(PatchFile.GetRelativePath(config.directory)!, "original");
+        string modPath = Path.Combine(PatchFile.GetRelativePath(config.directory)!, "modified");
 
         if (!Directory.Exists(origPath))
         {
-            Out.ERROR("MERGE", "yellow", 5, $"Missing original folder: {origPath}");
-            return 5;
+            Out.ERROR("MERGE", "yellow", 345, $"Missing original folder: {origPath}");
+            return 345;
         }
 
         if (!Directory.Exists(modPath))
         {
             Out.ERROR("MERGE", "yellow", 6, $"Missing modified folder: {modPath}");
-            return 6;
+            return 343;
         }
 
         return MergeGMLImport.ImportMerged(Data, origPath, modPath, config);
@@ -175,7 +167,7 @@ public static class MergeGMLImport
 
     public static int ImportMerged(UndertaleData Data, string originalDir, string modifiedDir, GMLImportConfig config)
     {
-        string debugPath = Path.Combine(PatchFile.GetRelativePath(config.directory), "debug");
+        string debugPath = Path.Combine(PatchFile.GetRelativePath(config.directory)!, "debug");
 
         var importGroup = new CodeImportGroup(Data);
         int mergedCount = 0;
@@ -232,8 +224,8 @@ public static class MergeGMLImport
         }
         catch (Exception ex)
         {
-            Out.ERROR("MERGE", "yellow", 500, $"Import failed: {ex.Message}");
-            return 500;
+            Out.ERROR("MERGE", "yellow", 347, $"Import failed: {ex.Message}");
+            return 347;
         }
     }
 
