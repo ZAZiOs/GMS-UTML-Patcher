@@ -30,7 +30,6 @@ public static class PatchFile
             Out.ERROR("PATCHER", "gray", 103, $"Patcher file not found: {patcherFilePath}");
             return 103;
         }
-
         Out.INFO("PATCHER", "gray", "Applying patch to file...");
 
         try
