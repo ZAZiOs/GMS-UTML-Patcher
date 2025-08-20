@@ -20,10 +20,12 @@ This document lists all exit and error codes returned by the GMS-UTML-Patcher to
 | 104   | Failed to save patched data                  |
 | 200   | General error during checks validation       |
 | 201   | Invalid or missing 'checks' object in test file |
-| 202   | Timestamp mismatch                           |
-| 203   | SHA256 hash mismatch                         |
+| 202   | Basic checks failed  (Name, GMS2, or YYC mismatch) |
+| 203   | Missing or invalid 'buildTimestamp' in checks|
+| 204   | SHA256 hash mismatch                         |
+| 205   | Timestamp mismatch Patch newer than Original |
+| 206   | Timestamp mismatch Original newer than Patch |
 | 300   | General patcher error                        |
-
 ---
 
 ## Audio Import Errors
