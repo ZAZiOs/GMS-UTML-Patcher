@@ -7,22 +7,25 @@ using UndertaleModLib;
 public static class TestFileValidator
 {
     public static int Validate(string dataPath, UndertaleData game, Arguments arguments)
+        => Validate(dataPath, game, GMS_UTML_Patcher.Engine.PatchOptions.FromArguments(arguments));
+
+    public static int Validate(string dataPath, UndertaleData game, GMS_UTML_Patcher.Engine.PatchOptions options)
     {
-        if (string.IsNullOrEmpty(arguments.PatcherFile))
+        if (string.IsNullOrEmpty(options.PatcherFile))
         {
             Out.ERROR("CHECKS", "blue", 11, "No patch file provided.");
             return 11;
         }
 
-        if (!File.Exists(arguments.PatcherFile))
+        if (!File.Exists(options.PatcherFile))
         {
-            Out.ERROR("CHECKS", "blue", 103, $"Patch file not found: {arguments.PatcherFile}");
+            Out.ERROR("CHECKS", "blue", 103, $"Patch file not found: {options.PatcherFile}");
             return 103;
         }
 
         try
         {
-            var json = File.ReadAllText(arguments.PatcherFile);
+            var json = File.ReadAllText(options.PatcherFile);
             var root = JsonNode.Parse(json)?.AsObject();
 
             if (root is null || !root.TryGetPropertyValue("checks", out var checksNode) || checksNode is not JsonObject checks)
@@ -41,7 +44,7 @@ public static class TestFileValidator
                 return 202;
             }
 
-            if (!arguments.SkipTimestampCheck)
+            if (!options.SkipTimestampCheck)
             {
                 if (checks.TryGetPropertyValue("buildTimestamp", out var timestampNode) && 
                     timestampNode is JsonValue expectedTimestamp)
@@ -77,7 +80,7 @@ public static class TestFileValidator
                 Out.SKIP("CHECKS", "blue", "Skipping timestamp check.");
             }
 
-            if (!arguments.SkipHashCheck)
+            if (!options.SkipHashCheck)
             {
                 string actualHash = TestFileCommon.ComputeSha256(dataPath);
                 if (!CheckField("SHA256", actualHash, checks))

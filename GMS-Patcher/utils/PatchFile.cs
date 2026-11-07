@@ -6,14 +6,16 @@ using UndertaleModLib.Models;
 
 public static class PatchFile
 {
+    public static string? CurrentPatchFilePath { get; set; }
+
     public static string? GetRelativePath(string relativePathFromJson)
     {
         if (string.IsNullOrEmpty(relativePathFromJson))
             return null;
 
-        var jsonPath = Program.arguments?.PatcherFile;
+        var jsonPath = CurrentPatchFilePath ?? Program.arguments?.PatcherFile;
         if (string.IsNullOrEmpty(jsonPath))
-            throw new InvalidOperationException("JSON file path was not specified in arguments.");
+            throw new InvalidOperationException("JSON file path was not specified in arguments or context.");
 
         var jsonDirectory = Path.GetDirectoryName(Path.GetFullPath(jsonPath));
         if (string.IsNullOrEmpty(jsonDirectory))
@@ -32,6 +34,8 @@ public static class PatchFile
         }
         Out.INFO("PATCHER", "gray", "Applying patch to file...");
 
+        string? previousPath = CurrentPatchFilePath;
+        CurrentPatchFilePath = patcherFilePath;
         try
         {
             using var jsonStream = File.OpenRead(patcherFilePath);
@@ -46,6 +50,10 @@ public static class PatchFile
             Out.ERROR("PATCHER", "gray", 300, $"Failed to apply patch file: {ex.Message}");
             Out.INFO("PATCHER", "gray", ex.StackTrace ?? string.Empty);
             return 300;
+        }
+        finally
+        {
+            CurrentPatchFilePath = previousPath;
         }
     }
     private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
