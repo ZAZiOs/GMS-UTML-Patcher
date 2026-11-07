@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/GMS-Patcher/">
+    <Project Path="GMS-Patcher/GMS-UTML-Patcher.csproj" />
+  </Folder>
+  <Folder Name="/UndertaleModTool/">
+    <Project Path="UndertaleModTool/UndertaleModLib/UndertaleModLib.csproj" />
+  </Folder>
+  <Folder Name="/UndertaleModTool/Underanalyzer/">
+    <Project Path="UndertaleModTool/Underanalyzer/Underanalyzer/Underanalyzer.csproj" />
+  </Folder>
+  <Project Path="GMS-Patcher.UI/GMS-Patcher.UI.csproj" />
+</Solution>
