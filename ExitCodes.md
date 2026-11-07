@@ -75,6 +75,29 @@ This document lists all exit and error codes returned by the GMS-UTML-Patcher to
 
 ---
 
+## Rooms Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 350   | General Rooms import error                   |
+| 351   | Missing or nonexistent "directory" for Rooms import |
+| 352   | Selected folder contains no .room files      |
+| 353   | Failed to deserialize or apply room file      |
+| 354   | Failed to compile room creation code         |
+
+---
+
+## Objects Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 360   | General Objects import error                 |
+| 361   | Missing or nonexistent "directory" for Objects import |
+| 362   | Selected folder contains no .json files      |
+| 363   | Failed to deserialize or apply object file   |
+
+---
+
 ## Notes
 
 - Some codes originate from dependencies or internal libraries.  

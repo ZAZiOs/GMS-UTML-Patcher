@@ -51,6 +51,7 @@ This dictionary allows you to define custom properties for specific sprites by t
 | `margin`      | Object     | Defines margins (left, right, top, bottom) in pixels, used for bounding or collision boxes.|
 | `transparent` | Boolean    | Sets the sprite's transparency flag (`true` or `false`).                                   |
 | `origin`      | Object     | Specifies the origin point coordinates (`x`, `y`) within the sprite.                       |
+| `specialType` | Object     | Specifies file as special type
 
 #### Example configuration
 
@@ -71,6 +72,10 @@ This dictionary allows you to define custom properties for specific sprites by t
     "origin": {
       "x": 60,
       "y": 25
+    },
+    "specialType": {
+      "version": 3,
+      "playbackfps": 10
     }
   }
 }
@@ -164,3 +169,55 @@ When `manually_configure_each` is `true` or for specific overrides:
 
 - When replacing existing sounds, only audio data is updated by default (unless `replace_properties` is true)
 - Folder-based audio groups only work when embedding is enabled
+
+---
+
+## Rooms Import Configuration
+
+Configures how exported rooms (`.room` binary files) are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing `.room` binary files to import (relative to patch file)       |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing rooms matching by name                                        |
+| `addNew`          | bool                  | `true`  | Whether to register new rooms in `data.win` and `RoomOrder` if they don't exist yet          |
+| `compileCode`     | bool                  | `true`  | Whether to compile and link room creation code and instance creation codes                  |
+
+### Example configuration
+
+```json
+"rooms": {
+  "directory": "rooms/",
+  "replaceExisting": true,
+  "addNew": true,
+  "compileCode": true
+}
+```
+
+---
+
+## Objects Import Configuration
+
+Configures how game objects (`.json` definition files) are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing `.json` game object definitions (relative to patch file)       |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing objects matching by name                                      |
+| `addNew`          | bool                  | `true`  | Whether to register new game objects in `data.win` if they don't exist yet                  |
+
+### Example configuration
+
+```json
+"objects": {
+  "directory": "objects/",
+  "replaceExisting": true,
+  "addNew": true
+}
+```
+
+

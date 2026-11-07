@@ -145,6 +145,50 @@ public static class PatchFile
             }
         }
 
+        if (TryProcessSection(doc, "objects", out var objectsElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<ObjectsImportConfig>(objectsElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize objects config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing game objects...");
+                int result = ObjectsImporter.Import(data, config);
+                if (result != 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 360, $"Objects import failed: {ex.Message}");
+                return 360;
+            }
+        }
+
+        if (TryProcessSection(doc, "rooms", out var roomsElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<RoomsImportConfig>(roomsElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize rooms config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing rooms...");
+                int result = RoomsImporter.Import(data, config);
+                if (result != 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 350, $"Rooms import failed: {ex.Message}");
+                return 350;
+            }
+        }
+
         return 0;
     }
 
