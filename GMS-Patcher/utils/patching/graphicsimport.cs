@@ -1027,6 +1027,36 @@ public class ImportGraphicsBase
                 }
             }
         }
+
+        if (spriteProps.TryGetValue("specialType", out var specialTypeObj))
+        {
+            var specialTypeElem = GetJsonElement(specialTypeObj);
+            if (specialTypeElem.HasValue && specialTypeElem.Value.ValueKind == JsonValueKind.Object)
+            {
+                var stObj = specialTypeElem.Value;
+                sprite.IsSpecialType = true;
+                sprite.SSpriteType = UndertaleSprite.SpriteType.Normal;
+
+                if (stObj.TryGetProperty("version", out var vProp) && vProp.TryGetUInt32(out var vVal))
+                {
+                    sprite.SVersion = vVal;
+                    if (verboseLevel >= 2)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set SVersion of '{spriteName}' to {vVal}");
+                }
+                else
+                {
+                    sprite.SVersion = 3;
+                }
+
+                if (stObj.TryGetProperty("playbackfps", out var fpsProp) && fpsProp.TryGetSingle(out var fpsVal))
+                {
+                    sprite.GMS2PlaybackSpeed = fpsVal;
+                    sprite.GMS2PlaybackSpeedType = AnimSpeedType.FramesPerSecond;
+                    if (verboseLevel >= 2)
+                        Out.VERBOSE("GRAPHICS", "green", $"Set GMS2PlaybackSpeed of '{spriteName}' to {fpsVal}");
+                }
+            }
+        }
     }
 
 

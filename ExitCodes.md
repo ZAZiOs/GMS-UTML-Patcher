@@ -20,10 +20,12 @@ This document lists all exit and error codes returned by the GMS-UTML-Patcher to
 | 104   | Failed to save patched data                  |
 | 200   | General error during checks validation       |
 | 201   | Invalid or missing 'checks' object in test file |
-| 202   | Timestamp mismatch                           |
-| 203   | SHA256 hash mismatch                         |
+| 202   | Basic checks failed  (Name, GMS2, or YYC mismatch) |
+| 203   | Missing or invalid 'buildTimestamp' in checks|
+| 204   | SHA256 hash mismatch                         |
+| 205   | Timestamp mismatch Patch newer than Original |
+| 206   | Timestamp mismatch Original newer than Patch |
 | 300   | General patcher error                        |
-
 ---
 
 ## Audio Import Errors
@@ -70,6 +72,49 @@ This document lists all exit and error codes returned by the GMS-UTML-Patcher to
 | 345   | Missing original folder                       |
 | 346   | Unknown import type (only 'base' or 'merge' allowed) |
 | 347   | CODE import failed                            |
+
+---
+
+## Rooms Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 350   | General Rooms import error                   |
+| 351   | Missing or nonexistent "directory" for Rooms import |
+| 352   | Selected folder contains no .room files      |
+| 353   | Failed to deserialize or apply room file      |
+| 354   | Failed to compile room creation code         |
+
+---
+
+## Objects Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 360   | General Objects import error                 |
+| 361   | Missing or nonexistent "directory" for Objects import |
+| 362   | Selected folder contains no .json files      |
+| 363   | Failed to deserialize or apply object file   |
+
+---
+
+## Shaders Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 370   | General Shaders import error                 |
+| 371   | Missing or nonexistent "directory" for Shaders import |
+| 372   | Selected folder contains no shader subdirectories |
+| 373   | Failed to import shader                      |
+
+---
+
+## Settings Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 380   | General Settings application error           |
+| 381   | GeneralInfo chunk (GEN8) is missing in data.win |
 
 ---
 

@@ -51,6 +51,7 @@ This dictionary allows you to define custom properties for specific sprites by t
 | `margin`      | Object     | Defines margins (left, right, top, bottom) in pixels, used for bounding or collision boxes.|
 | `transparent` | Boolean    | Sets the sprite's transparency flag (`true` or `false`).                                   |
 | `origin`      | Object     | Specifies the origin point coordinates (`x`, `y`) within the sprite.                       |
+| `specialType` | Object     | Specifies file as special type
 
 #### Example configuration
 
@@ -71,6 +72,10 @@ This dictionary allows you to define custom properties for specific sprites by t
     "origin": {
       "x": 60,
       "y": 25
+    },
+    "specialType": {
+      "version": 3,
+      "playbackfps": 10
     }
   }
 }
@@ -164,3 +169,124 @@ When `manually_configure_each` is `true` or for specific overrides:
 
 - When replacing existing sounds, only audio data is updated by default (unless `replace_properties` is true)
 - Folder-based audio groups only work when embedding is enabled
+
+---
+
+## Rooms Import Configuration
+
+Configures how exported rooms (`.room` binary files) are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing `.room` binary files to import (relative to patch file)       |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing rooms matching by name                                        |
+| `addNew`          | bool                  | `true`  | Whether to register new rooms in `data.win` and `RoomOrder` if they don't exist yet          |
+| `compileCode`     | bool                  | `true`  | Whether to compile and link room creation code and instance creation codes                  |
+
+### Example configuration
+
+```json
+"rooms": {
+  "directory": "rooms/",
+  "replaceExisting": true,
+  "addNew": true,
+  "compileCode": true
+}
+```
+
+---
+
+## Objects Import Configuration
+
+Configures how game objects (`.json` definition files) are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing `.json` game object definitions (relative to patch file)       |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing objects matching by name                                      |
+| `addNew`          | bool                  | `true`  | Whether to register new game objects in `data.win` if they don't exist yet                  |
+
+### Example configuration
+
+```json
+"objects": {
+  "directory": "objects/",
+  "replaceExisting": true,
+  "addNew": true
+}
+```
+
+---
+
+## Shaders Import Configuration
+
+Configures how shader source files are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing shader subdirectories (relative to patch file)                |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing shaders matching by name                                      |
+| `addNew`          | bool                  | `true`  | Whether to register new shaders in `data.win` if they don't exist yet                       |
+
+### Example configuration
+
+```json
+"shaders": {
+  "directory": "shaders/",
+  "replaceExisting": true,
+  "addNew": true
+}
+```
+
+---
+
+## Settings & Entrypoints Configuration
+
+Configures general game settings, display flags, FPS, room loading order, and mod entrypoint scripts.
+
+### Fields
+
+| Field                 | Type         | Default | Description                                                                                 |
+|-----------------------|--------------|---------|---------------------------------------------------------------------------------------------|
+| `displayName`         | string?      | —       | Window title of the game                                                                    |
+| `gameName`            | string?      | —       | Internal game name                                                                          |
+| `fps`                 | float?       | —       | Target game FPS (GameMaker Studio 2)                                                        |
+| `defaultWindowWidth`  | uint?        | —       | Default window width                                                                        |
+| `defaultWindowHeight` | uint?        | —       | Default window height                                                                       |
+| `flags`               | Object?      | —       | Engine display and sync flags (`fullscreen`, `interpolate`, `scale`, `sizeable`, `sync`, `showCursor`, `borderless`) |
+| `roomOrder`           | Object?      | —       | Room execution order (`startRoom` moves a room to index 0, or `order` defines the full list) |
+| `globalInitScripts`   | string[]?    | —       | List of scripts to execute before the first room loads (`FORM.GLOB`)                         |
+| `gameEndScripts`      | string[]?    | —       | List of scripts to execute on game shutdown (`FORM.GMEN`)                                    |
+
+### Example configuration
+
+```json
+"settings": {
+  "displayName": "Undertale: Remastered",
+  "fps": 60,
+  "defaultWindowWidth": 1280,
+  "defaultWindowHeight": 720,
+  "flags": {
+    "fullscreen": false,
+    "interpolate": false,
+    "sizeable": true,
+    "sync": true,
+    "showCursor": true
+  },
+  "roomOrder": {
+    "startRoom": "rm_mod_menu"
+  },
+  "globalInitScripts": [
+    "gml_GlobalScript_ModLoaderInit"
+  ]
+}
+```
+
+
+

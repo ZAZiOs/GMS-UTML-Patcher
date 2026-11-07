@@ -60,7 +60,10 @@ public static class TestFileValidator
                             $"Expected: {expectedDate} (Unix: {expectedTs})\n" +
                             $"Actual:   {actualDate} (Unix: {actualTs})");
                         Out.INFO("CHECKS", "blue", "To skip timestamp check use --skip-timestamp, to update it use --make-checks");
-                        return 203;
+                        if (actualTs > expectedTs)
+                            return 205;
+                        else 
+                            return 206;
                     }
                 }
                 else
