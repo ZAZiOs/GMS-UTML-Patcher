@@ -57,3 +57,5 @@ libs/
 patch/
 dat*.win
 publish/
+
+gui-patcher-ref/
