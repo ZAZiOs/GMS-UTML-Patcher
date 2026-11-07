@@ -98,6 +98,26 @@ This document lists all exit and error codes returned by the GMS-UTML-Patcher to
 
 ---
 
+## Shaders Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 370   | General Shaders import error                 |
+| 371   | Missing or nonexistent "directory" for Shaders import |
+| 372   | Selected folder contains no shader subdirectories |
+| 373   | Failed to import shader                      |
+
+---
+
+## Settings Import Errors
+
+| Code | Description                                  |
+|-------|---------------------------------------------|
+| 380   | General Settings application error           |
+| 381   | GeneralInfo chunk (GEN8) is missing in data.win |
+
+---
+
 ## Notes
 
 - Some codes originate from dependencies or internal libraries.  

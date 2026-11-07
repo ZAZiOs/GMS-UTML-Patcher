@@ -189,6 +189,49 @@ public static class PatchFile
             }
         }
 
+        if (TryProcessSection(doc, "shaders", out var shadersElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<ShadersImportConfig>(shadersElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize shaders config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing shaders...");
+                int result = ShadersImporter.Import(data, config);
+                if (result != 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 370, $"Shaders import failed: {ex.Message}");
+                return 370;
+            }
+        }
+
+        if (TryProcessSection(doc, "settings", out var settingsElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<SettingsImportConfig>(settingsElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize settings config.");
+                    return 0;
+                }
+
+                int result = SettingsImporter.Apply(data, config);
+                if (result != 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 380, $"Settings application failed: {ex.Message}");
+                return 380;
+            }
+        }
+
         return 0;
     }
 

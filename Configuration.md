@@ -220,4 +220,73 @@ Configures how game objects (`.json` definition files) are imported and patched 
 }
 ```
 
+---
+
+## Shaders Import Configuration
+
+Configures how shader source files are imported and patched into the game data.
+
+### Fields
+
+| Field             | Type                  | Default | Description                                                                                 |
+|-------------------|-----------------------|---------|---------------------------------------------------------------------------------------------|
+| `directory`       | string **(required)** | —       | Path to the folder containing shader subdirectories (relative to patch file)                |
+| `replaceExisting` | bool                  | `true`  | Whether to overwrite existing shaders matching by name                                      |
+| `addNew`          | bool                  | `true`  | Whether to register new shaders in `data.win` if they don't exist yet                       |
+
+### Example configuration
+
+```json
+"shaders": {
+  "directory": "shaders/",
+  "replaceExisting": true,
+  "addNew": true
+}
+```
+
+---
+
+## Settings & Entrypoints Configuration
+
+Configures general game settings, display flags, FPS, room loading order, and mod entrypoint scripts.
+
+### Fields
+
+| Field                 | Type         | Default | Description                                                                                 |
+|-----------------------|--------------|---------|---------------------------------------------------------------------------------------------|
+| `displayName`         | string?      | —       | Window title of the game                                                                    |
+| `gameName`            | string?      | —       | Internal game name                                                                          |
+| `fps`                 | float?       | —       | Target game FPS (GameMaker Studio 2)                                                        |
+| `defaultWindowWidth`  | uint?        | —       | Default window width                                                                        |
+| `defaultWindowHeight` | uint?        | —       | Default window height                                                                       |
+| `flags`               | Object?      | —       | Engine display and sync flags (`fullscreen`, `interpolate`, `scale`, `sizeable`, `sync`, `showCursor`, `borderless`) |
+| `roomOrder`           | Object?      | —       | Room execution order (`startRoom` moves a room to index 0, or `order` defines the full list) |
+| `globalInitScripts`   | string[]?    | —       | List of scripts to execute before the first room loads (`FORM.GLOB`)                         |
+| `gameEndScripts`      | string[]?    | —       | List of scripts to execute on game shutdown (`FORM.GMEN`)                                    |
+
+### Example configuration
+
+```json
+"settings": {
+  "displayName": "Undertale: Remastered",
+  "fps": 60,
+  "defaultWindowWidth": 1280,
+  "defaultWindowHeight": 720,
+  "flags": {
+    "fullscreen": false,
+    "interpolate": false,
+    "sizeable": true,
+    "sync": true,
+    "showCursor": true
+  },
+  "roomOrder": {
+    "startRoom": "rm_mod_menu"
+  },
+  "globalInitScripts": [
+    "gml_GlobalScript_ModLoaderInit"
+  ]
+}
+```
+
+
 
