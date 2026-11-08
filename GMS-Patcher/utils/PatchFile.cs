@@ -41,7 +41,9 @@ public static class PatchFile
             using var jsonStream = File.OpenRead(patcherFilePath);
             using var doc = JsonDocument.Parse(jsonStream);
 
-            ProcessPatchSections(doc, data);
+            int sectionResult = ProcessPatchSections(doc, data);
+            if (sectionResult != 0)
+                return sectionResult;
 
             return 0;
         }

@@ -4,237 +4,331 @@
         x:Class="GMS_Patcher.UI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
+        Icon="{Binding WindowIcon}"
         Width="530" Height="400"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F6F8">
+        Background="#EFF0F1">
 
     <Grid>
-        <!-- Main Content Area -->
-        <Grid RowDefinitions="*, 45">
-            <!-- PAGE CONTENT -->
-            <Panel Grid.Row="0">
-                <!-- 1. INTRO PAGE -->
-                <Grid ColumnDefinitions="171, *" IsVisible="{Binding IsIntro}">
-                    <Border Grid.Column="0" Background="#E0E0E0">
+                <Grid RowDefinitions="*, 48">
+                        <Panel Grid.Row="0">
+                                <Grid ColumnDefinitions="177, *" IsVisible="{Binding IsIntro}">
+                    <Border Grid.Column="0" Classes="kde-banner-left">
                         <Image Source="{Binding IntroBanner}" Stretch="UniformToFill" />
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="25, 20, 25, 10" Spacing="12">
-                        <TextBlock Text="{Binding IntroTitle}" FontSize="15" FontWeight="Bold" TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding IntroSubtitle}" FontSize="12" Foreground="#444" TextWrapping="Wrap" />
-                        <Border Height="1" Background="#DDD" Margin="0, 5" />
-                        <TextBlock Text="{Binding Version}" FontSize="11" Foreground="#777" />
-                        <Button Content="Возникли проблемы при установке?"
-                                Command="{Binding OpenUrl}" CommandParameter="{Binding IssuesUrl}"
-                                Background="Transparent" Foreground="#5865F2" Padding="0" Cursor="Hand" />
-                    </StackPanel>
-                </Grid>
+                    <Grid Grid.Column="1" Background="#FFFFFF" RowDefinitions="Auto, *, Auto">
+                        <StackPanel Grid.Row="0" Margin="16, 10, 12, 0">
+                            <TextBlock Text="{Binding IntroTitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=18, macOS=16}"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A1C1E" TextWrapping="Wrap"
+                                       LineHeight="24" Margin="0, 0, 0, 6" />
 
-                <!-- 2. DROP LINK PAGE -->
-                <Grid RowDefinitions="70, *" IsVisible="{Binding IsDropLink}">
-                    <!-- Header -->
-                    <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="15, 10">
-                        <Grid ColumnDefinitions="50, *">
-                            <Image Grid.Column="0" Source="{Binding HeaderIcon}" Width="40" Height="40" HorizontalAlignment="Left" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                <TextBlock Text="Выбор папки с игрой" FontWeight="SemiBold" FontSize="13" />
-                                <TextBlock Text="Укажите расположение файлов DELTARUNE" FontSize="11" Foreground="#666" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <!-- Body -->
-                    <StackPanel Grid.Row="1" Margin="20, 15" Spacing="10">
-                        <!-- Admin Warning Banner -->
-                        <Border Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" CornerRadius="4" Padding="8"
-                                IsVisible="{Binding IsAdminWarningVisible}">
-                            <TextBlock Text="Внимание: запуск под администратором! Перетаскивание может не работать, используйте классический режим."
-                                       FontSize="10" Foreground="#856404" TextWrapping="Wrap" />
-                        </Border>
+                            <TextBlock Text="{Binding IntroSubtitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="Normal"
+                                       Foreground="#383C40"
+                                       TextWrapping="Wrap" LineHeight="20"
+                                       Margin="0, 0, 0, 20" />
 
-                        <!-- Drop Zone -->
-                        <Border Name="DropZoneBorder" Height="140" CornerRadius="6"
-                                BorderBrush="#B0B0B0" BorderThickness="1.5"
-                                Background="White" Cursor="Hand"
-                                DragDrop.AllowDrop="True">
-                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                                <Image Source="{Binding CurrentDropIcon}" Width="42" Height="42" />
-                                <TextBlock Text="{Binding DropLabelText}" FontSize="11" FontWeight="Medium"
-                                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="440" Foreground="#333" />
-                                <Button Content="Не работает? Классический режим"
-                                        Command="{Binding SwitchToClassicMode}"
-                                        Background="Transparent" Foreground="#5865F2" FontSize="11" Padding="0" Cursor="Hand" HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
+                                                        <Button Classes="link" Content="{Binding IntroIssuesLink}"
+                                    Command="{Binding OpenIssuesUrl}"
+                                    FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                    FontSize="{OnPlatform Default=14, macOS=13}"
+                                    HorizontalAlignment="Left" Padding="0" />
+                        </StackPanel>
 
-                        <!-- Disk Space Info -->
-                        <Grid ColumnDefinitions="*, *" Margin="5, 0">
-                            <TextBlock Grid.Column="0" Text="{Binding SpaceRequiredText}" FontSize="11" Foreground="#666" />
-                            <TextBlock Grid.Column="1" Text="{Binding SpaceAvailableText}" FontSize="11" Foreground="#666" HorizontalAlignment="Right" />
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 3. SELECT PATH PAGE -->
-                <Grid RowDefinitions="70, *" IsVisible="{Binding IsSelectPath}">
-                    <!-- Header -->
-                    <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="15, 10">
-                        <Grid ColumnDefinitions="50, *">
-                            <Image Grid.Column="0" Source="{Binding HeaderIcon}" Width="40" Height="40" HorizontalAlignment="Left" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                <TextBlock Text="Классический выбор пути" FontWeight="SemiBold" FontSize="13" />
-                                <TextBlock Text="Выберите папку с установленной игрой вручную" FontSize="11" Foreground="#666" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <!-- Body -->
-                    <StackPanel Grid.Row="1" Margin="25, 20" Spacing="15">
-                        <TextBlock Text="Укажите папку с игрой DELTARUNE:" FontSize="12" />
-                        <Grid ColumnDefinitions="*, 80">
-                            <TextBox Grid.Column="0" Text="{Binding PathFieldText}" FontSize="12" VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Content="Обзор..." Click="OnBrowseClicked" Margin="8,0,0,0"
-                                    Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                        </Grid>
-
-                        <Button Content="Вернуться к режиму перетаскивания"
-                                Command="{Binding SwitchToDropMode}"
-                                Background="Transparent" Foreground="#5865F2" FontSize="11" Padding="0" Cursor="Hand" />
-
-                        <!-- Disk Space Info -->
-                        <Grid ColumnDefinitions="*, *" Margin="0, 10, 0, 0">
-                            <TextBlock Grid.Column="0" Text="{Binding SpaceRequiredText}" FontSize="11" Foreground="#666" />
-                            <TextBlock Grid.Column="1" Text="{Binding SpaceAvailableText}" FontSize="11" Foreground="#666" HorizontalAlignment="Right" />
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 4. INSTALLATION PAGE -->
-                <Grid RowDefinitions="70, *" IsVisible="{Binding IsInstallation}">
-                    <!-- Header -->
-                    <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="15, 10">
-                        <Grid ColumnDefinitions="50, *">
-                            <Image Grid.Column="0" Source="{Binding HeaderIcon}" Width="40" Height="40" HorizontalAlignment="Left" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                <TextBlock Text="Установка модификации" FontWeight="SemiBold" FontSize="13" />
-                                <TextBlock Text="Пожалуйста, подождите, пока файлы патча применяются..." FontSize="11" Foreground="#666" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                    <!-- Body -->
-                    <Grid Grid.Row="1" Margin="25, 15" RowDefinitions="Auto, Auto, Auto, *">
-                        <!-- Mascot & Status Text -->
-                        <Grid Grid.Row="0" ColumnDefinitions="60, *" Margin="0, 0, 0, 10">
-                            <Image Grid.Column="0" Source="{Binding StatusMascot}" Width="50" Height="50" HorizontalAlignment="Left" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                <TextBlock Text="{Binding StatusText}" FontWeight="Medium" FontSize="12" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Progress Bar & Percentage -->
-                        <Grid Grid.Row="1" ColumnDefinitions="*, 45" VerticalAlignment="Center" Margin="0, 5">
-                            <ProgressBar Grid.Column="0" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" Height="14" />
-                            <TextBlock Grid.Column="1" Text="{Binding ProgressText}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" />
-                        </Grid>
-
-                        <!-- Toggle Details Button -->
-                        <Button Grid.Row="2" Content="Подробнее..." Command="{Binding ToggleDetails}"
-                                Background="Transparent" Foreground="#5865F2" FontSize="11" Padding="0" Margin="0, 5" Cursor="Hand" />
-
-                        <!-- Detailed Logs -->
-                        <TextBox Grid.Row="3" Name="LogsTextBox" Text="{Binding DetailedLogs}"
-                                 IsReadOnly="True" AcceptsReturn="True"
-                                 FontSize="10" FontFamily="Consolas, monospace"
-                                 Background="#FAFAFA" BorderBrush="#CCC"
-                                 IsVisible="{Binding IsDetailsVisible}" Margin="0, 5, 0, 0" />
+                        <StackPanel Grid.Row="2" Margin="16, 0, 14, 10" Spacing="2">
+                            <TextBlock Text="{Binding IntroVersionLabel}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="Normal"
+                                       Foreground="#202224" />
+                            <TextBlock Text="{Binding Version}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="Normal"
+                                       Foreground="#202224" />
+                            <TextBlock Text="{Binding IntroNextPrompt}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontStyle="Italic"
+                                       Foreground="#6E7681" Margin="0, 8, 0, 0" />
+                        </StackPanel>
                     </Grid>
                 </Grid>
 
-                <!-- 5. END SUCCESS PAGE -->
-                <Grid ColumnDefinitions="171, *" IsVisible="{Binding IsEndSuccess}">
-                    <Border Grid.Column="0" Background="#E0E0E0">
-                        <Image Source="{Binding SuccessImage}" Stretch="UniformToFill" />
+                                <Grid RowDefinitions="68, *" IsVisible="{Binding IsDropLink}">
+                    <Border Grid.Row="0" Height="68" BorderThickness="0, 0, 0, 1" BorderBrush="#D0D4D8">
+                        <Grid ColumnDefinitions="115, *">
+                            <Border Grid.Column="0" Background="#000000">
+                                <Image Source="{Binding HeaderBanner}" Width="90" Height="50"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Stretch="Uniform" />
+                            </Border>
+                            <Border Grid.Column="1" Background="#FFFFFF" Padding="12, 8">
+                                <StackPanel VerticalAlignment="Center" Spacing="6">
+                                    <TextBlock Text="{Binding DropHeaderTitle}"
+                                               FontSize="16" FontWeight="Bold" Foreground="#1A1C1E" />
+                                    <TextBlock Text="{Binding DropHeaderSubtitle}"
+                                               FontSize="13" Foreground="#383C40" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="25, 25, 25, 10" Spacing="15">
-                        <TextBlock Text="{Binding SuccessTitle}" FontSize="16" FontWeight="Bold" />
-                        <TextBlock Text="{Binding SuccessSubtitle}" FontSize="12" Foreground="#444" TextWrapping="Wrap" />
-                        <Border Height="1" Background="#DDD" Margin="0, 5" />
-                        <Button Content="{Binding CommunityText}"
-                                Command="{Binding OpenUrl}" CommandParameter="{Binding CommunityUrl}"
-                                Background="Transparent" Foreground="#5865F2" FontSize="12" Padding="0" Cursor="Hand" />
-                        <CheckBox Content="{Binding StartGameCheckbox}" IsChecked="{Binding StartGameChecked}"
-                                  FontSize="12" Margin="0, 15, 0, 0" />
-                    </StackPanel>
+
+                    <Grid Grid.Row="1" RowDefinitions="Auto, *, Auto" Margin="24, 10, 24, 10">
+                        <StackPanel Grid.Row="0" Spacing="8">
+                            <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" CornerRadius="3" Padding="8, 6"
+                                    IsVisible="{Binding IsAdminWarningVisible}">
+                                <TextBlock Text="{Binding AdminWarningText}"
+                                           FontSize="10" Foreground="#795548" TextWrapping="Wrap" />
+                            </Border>
+
+                            <Grid Margin="0, 2, 0, 0">
+                                <Border Name="DropZoneBorder" Classes="kde-dropzone" Margin="0, 8, 0, 0" Height="148"
+                                        DragDrop.AllowDrop="True">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="6">
+                                        <Image Source="{Binding CurrentDropIcon}" Width="48" Height="48" Stretch="Uniform" />
+                                        <TextBlock Text="{Binding DropLabelText}" FontSize="12" Foreground="#383C40"
+                                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="440" />
+                                        <Button Classes="link" Content="{Binding DropClassicLinkText}"
+                                                Command="{Binding SwitchToClassicMode}"
+                                                FontSize="12" HorizontalAlignment="Center" Margin="0, 2, 0, 0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="#EFF0F1" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Margin="14, 0, 0, 0" Padding="4, 0">
+                                    <TextBlock Text="{Binding DropGroupBoxTitle}" FontSize="12" Foreground="#232629" />
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Margin="2, 0, 0, 0" Spacing="2">
+                            <TextBlock Text="{Binding SpaceRequiredText}" FontSize="12" Foreground="#232629" />
+                            <TextBlock Text="{Binding SpaceAvailableText}" FontSize="12" Foreground="#232629" />
+                            <TextBlock Text="{Binding CopyrightText}" FontSize="12" Foreground="#8C939A" Margin="0, 4, 0, 0" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
 
-                <!-- 6. END FAIL PAGE -->
-                <Grid ColumnDefinitions="171, *" IsVisible="{Binding IsEndFail}">
-                    <Border Grid.Column="0" Background="#E0E0E0">
+                <Grid RowDefinitions="68, *" IsVisible="{Binding IsSelectPath}">
+                    <Border Grid.Row="0" Height="68" BorderThickness="0, 0, 0, 1" BorderBrush="#D0D4D8">
+                        <Grid ColumnDefinitions="115, *">
+                            <Border Grid.Column="0" Background="#000000">
+                                <Image Source="{Binding HeaderBanner}" Width="90" Height="50"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Stretch="Uniform" />
+                            </Border>
+                            <Border Grid.Column="1" Background="#FFFFFF" Padding="16, 12">
+                                <StackPanel VerticalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="{Binding PathHeaderTitle}"
+                                               FontSize="16" FontWeight="Bold" Foreground="#1A1C1E" />
+                                    <TextBlock Text="{Binding PathHeaderSubtitle}"
+                                               FontSize="11" Foreground="#383C40" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1" RowDefinitions="Auto, *, Auto" Margin="24, 14, 24, 10">
+                        <StackPanel Grid.Row="0" Spacing="10">
+                            <TextBlock Text="{Binding PathLabel}" FontSize="12" FontWeight="Medium" Foreground="#232629" />
+
+                            <Grid ColumnDefinitions="*, 85">
+                                <TextBox Grid.Column="0" Text="{Binding PathFieldText}" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Content="{Binding PathBrowseBtn}" Click="OnBrowseClicked" Margin="8,0,0,0"
+                                        Width="80" Height="28" />
+                            </Grid>
+
+                            <Button Classes="link" Content="{Binding PathBackToDropLink}"
+                                    Command="{Binding SwitchToDropMode}"
+                                    FontSize="12" Margin="0, 2" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Margin="2, 0, 0, 0" Spacing="2">
+                            <Border Height="1" Background="#D8DCDE" Margin="0, 0, 0, 8" />
+                            <TextBlock Text="{Binding SpaceRequiredText}" FontSize="12" Foreground="#232629" />
+                            <TextBlock Text="{Binding SpaceAvailableText}" FontSize="12" Foreground="#232629" />
+                            <TextBlock Text="{Binding CopyrightText}" FontSize="12" Foreground="#8C939A" Margin="0, 4, 0, 0" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <Grid RowDefinitions="68, *" IsVisible="{Binding IsInstallation}">
+                    <Border Grid.Row="0" Height="68" BorderThickness="0, 0, 0, 1" BorderBrush="#D0D4D8">
+                        <Grid ColumnDefinitions="115, *">
+                            <Border Grid.Column="0" Background="#000000">
+                                <Image Source="{Binding HeaderBanner}" Width="90" Height="50"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Stretch="Uniform" />
+                            </Border>
+                            <Border Grid.Column="1" Background="#FFFFFF" Padding="16, 0">
+                                <Grid ColumnDefinitions="*, 85" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="{Binding InstallHeaderTitle}"
+                                                   FontSize="16" FontWeight="Bold" Foreground="#1A1C1E" />
+                                        <TextBlock Text="{Binding InstallHeaderSubtitle}"
+                                                   FontSize="11" Foreground="#383C40" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Image Grid.Column="1" Source="{Binding StatusMascot}" Width="75" Height="60"
+                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1" Margin="20, 14" RowDefinitions="Auto, Auto, Auto, *">
+                        <Grid Grid.Row="0" ColumnDefinitions="*, 60" Margin="0, 0, 0, 6">
+                            <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontWeight="Medium" FontSize="11"
+                                       Foreground="#232629" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Text="{Binding ProgressText}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#1D99F3" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <ProgressBar Grid.Row="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" />
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0, 8, 0, 4">
+                            <Button Classes="link" Content="{Binding DetailsButtonText, FallbackValue='Детали'}"
+                                    Command="{Binding ToggleDetails}" FontSize="11" />
+                        </StackPanel>
+
+                        <TextBox Grid.Row="3" Name="LogsTextBox" Text="{Binding DetailedLogs}"
+                                 IsReadOnly="True" AcceptsReturn="True"
+                                 FontSize="10" FontFamily="Consolas, Cascadia Code, Courier New, monospace"
+                                 Background="#FFFFFF" BorderBrush="#B8BCBF"
+                                 IsVisible="{Binding IsDetailsVisible}" Margin="0, 4, 0, 0" />
+                    </Grid>
+                </Grid>
+
+                <Grid ColumnDefinitions="177, *" IsVisible="{Binding IsEndSuccess}">
+                    <Border Grid.Column="0" Classes="kde-banner-left">
+                        <Image Source="{Binding SuccessImage}" Stretch="UniformToFill" />
+                    </Border>
+                    <Grid Grid.Column="1" Background="#FFFFFF" RowDefinitions="Auto, *, Auto">
+                        <StackPanel Grid.Row="0" Margin="16, 10, 12, 0">
+                            <TextBlock Text="{Binding SuccessTitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=18, macOS=16}"
+                                       FontWeight="SemiBold" Foreground="#1A1C1E"
+                                       TextWrapping="Wrap" LineHeight="24" Margin="0, 0, 0, 6" />
+                            <TextBlock Text="{Binding SuccessSubtitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="Normal" Foreground="#383C40"
+                                       TextWrapping="Wrap" LineHeight="20" Margin="0, 0, 0, 24" />
+
+                            <CheckBox Content="{Binding StartGameCheckbox}" IsChecked="{Binding StartGameChecked}"
+                                      FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                      FontSize="{OnPlatform Default=14, macOS=13}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Margin="16, 0, 14, 10" Spacing="2">
+                            <Button Classes="link" Content="{Binding CommunityLink}"
+                                    Command="{Binding OpenCommunityUrl}"
+                                    FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                    FontSize="{OnPlatform Default=14, macOS=13}" HorizontalAlignment="Left" Padding="0" />
+                            <TextBlock Text="{Binding SuccessFinishPrompt}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontStyle="Italic"
+                                       Foreground="#6E7681" Margin="0, 4, 0, 0" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <Grid ColumnDefinitions="177, *" IsVisible="{Binding IsEndFail}">
+                    <Border Grid.Column="0" Classes="kde-banner-left">
                         <Image Source="{Binding FailImage}" Stretch="UniformToFill" />
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="25, 25, 25, 10" Spacing="12">
-                        <TextBlock Text="Ошибка при установке" FontSize="16" FontWeight="Bold" Foreground="#D32F2F" />
-                        <TextBlock Text="{Binding ErrorCodeText}" FontSize="13" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding ErrorDetailsText}" FontSize="11" Foreground="#555" TextWrapping="Wrap" MaxHeight="100" />
-                        <Border Height="1" Background="#DDD" Margin="0, 5" />
-                        <Button Content="Сообщить об ошибке на GitHub"
-                                Command="{Binding OpenUrl}" CommandParameter="{Binding IssuesUrl}"
-                                Background="Transparent" Foreground="#5865F2" FontSize="12" Padding="0" Cursor="Hand" />
-                    </StackPanel>
+                    <Grid Grid.Column="1" Background="#FFFFFF" RowDefinitions="Auto, *, Auto">
+                        <StackPanel Grid.Row="0" Margin="16, 10, 12, 0">
+                            <TextBlock Text="{Binding FailTitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=18, macOS=16}"
+                                       FontWeight="SemiBold" Foreground="#202224"
+                                       TextWrapping="Wrap" LineHeight="24" Margin="0, 0, 0, 6" />
+                            <TextBlock Text="{Binding ErrorCodeText}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="SemiBold" Foreground="#202224" Margin="0, 0, 0, 6" />
+                            <TextBlock Text="{Binding ErrorDetailsText}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="{OnPlatform Default=14, macOS=13}"
+                                       FontWeight="Normal" Foreground="#5E646A"
+                                       TextWrapping="Wrap" MaxHeight="140" LineHeight="20" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Margin="16, 0, 14, 10">
+                            <Border Height="1" Background="#E8EAEC" Margin="0, 0, 0, 10" />
+                            <Button Classes="link" Content="{Binding FailIssuesLink}"
+                                    Command="{Binding OpenIssuesUrl}"
+                                    FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                    FontSize="{OnPlatform Default=14, macOS=13}" HorizontalAlignment="Left" Padding="0" />
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Panel>
 
-            <!-- BOTTOM NAVIGATION BAR -->
-            <Border Grid.Row="1" Background="#EEEEEE" BorderBrush="#D0D0D0" BorderThickness="0,1,0,0" Padding="15, 8">
-                <Grid>
-                    <!-- Left: Cancel button -->
-                    <Button Content="Отмена" Click="OnCancelClicked" HorizontalAlignment="Left"
-                            Width="75" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                            IsVisible="{Binding !IsEndSuccess}" />
+                        <Border Grid.Row="1" Classes="kde-footer" Padding="20, 0">
+                <Grid VerticalAlignment="Center">
+                                        <Button Content="{Binding BtnExit}" Click="OnCancelClicked" HorizontalAlignment="Left"
+                            Width="85" Height="28"
+                            IsVisible="{Binding ShowLeftCancelButton}"
+                            IsEnabled="{Binding !IsInstallation}" />
 
-                    <!-- Right: Back / Next / Finish / Exit buttons -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                        <Button Content="&lt; Назад" Command="{Binding GoBack}"
-                                Width="75" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                IsVisible="{Binding !IsIntro}" IsEnabled="{Binding !IsInstallation}" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                                <Button Content="{Binding BtnBack}" Command="{Binding GoBack}"
+                                Width="85" Height="28"
+                                IsVisible="{Binding ShowBackButton}"
+                                IsEnabled="{Binding !IsInstallation}" />
 
-                        <Button Content="Далее &gt;" Command="{Binding GoNext}"
-                                Width="75" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                IsVisible="{Binding !IsEndSuccess}" IsEnabled="{Binding CanGoNext}" />
+                                                <Button Classes="primary" Content="{Binding NextButtonText}" Command="{Binding GoNext}"
+                                MinWidth="85" Height="28"
+                                IsVisible="{Binding ShowNextButton}"
+                                IsEnabled="{Binding CanGoNext}" />
 
-                        <Button Content="Завершить" Click="OnFinishClicked"
-                                Width="85" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                Background="#5865F2" Foreground="White"
+                                                <Button Content="{Binding BtnFinish}" Click="OnFinishClicked"
+                                Width="95" Height="28"
                                 IsVisible="{Binding IsEndSuccess}" />
 
-                        <Button Content="Выход" Click="OnCancelClicked"
-                                Width="75" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                <Button Content="{Binding BtnExit}" Click="OnCancelClicked"
+                                Width="85" Height="28"
                                 IsVisible="{Binding IsEndFail}" />
                     </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
-        <!-- INTERACTIVE WARNING MODAL OVERLAY -->
-        <Border Background="#80000000" IsVisible="{Binding IsWarningModalVisible}">
-            <Border Width="380" Background="White" CornerRadius="8" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    BoxShadow="0 4 16 0 #40000000">
-                <StackPanel Spacing="15">
-                    <Grid ColumnDefinitions="45, *">
-                        <Image Grid.Column="0" Source="{Binding WarningImage}" Width="40" Height="40" VerticalAlignment="Top" />
-                        <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="4">
-                            <TextBlock Text="{Binding WarningTitle}" FontWeight="Bold" FontSize="13" />
-                            <TextBlock Text="{Binding WarningSubtitle}" FontSize="11" Foreground="#444" TextWrapping="Wrap" />
+                <Border Background="#60000000" IsVisible="{Binding IsWarningModalVisible}">
+            <Border Width="460" Background="#FFFFFF" BorderBrush="#B8BCBF" BorderThickness="1"
+                    CornerRadius="6" Padding="22, 18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BoxShadow="0 6 24 0 #50000000">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Image Grid.Column="0" Source="{Binding WarningImage}" Width="80" Height="90"
+                               VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="None" Stretch="Uniform" />
+                        <StackPanel Grid.Column="1" Margin="16, 0, 0, 0" VerticalAlignment="Center" Spacing="6">
+                            <TextBlock Text="{Binding WarningTitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontWeight="SemiBold" FontSize="14" Foreground="#1A1C1E" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding WarningSubtitle}"
+                                       FontFamily="{OnPlatform Default='Segoe UI', macOS='-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue'}"
+                                       FontSize="12" Foreground="#383C40" TextWrapping="Wrap" LineHeight="18" />
                         </StackPanel>
                     </Grid>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0, 5, 0, 0">
-                        <Button Content="Отменить" Command="{Binding WarningConfirm}" CommandParameter="{x:False}"
-                                Width="80" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
-                        <Button Content="Продолжить" Command="{Binding WarningConfirm}" CommandParameter="{x:True}"
-                                Width="95" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                Background="#5865F2" Foreground="White" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0, 4, 0, 0">
+                        <Button Content="{Binding WarningCancel}" Command="{Binding CancelWarning}"
+                                MinWidth="90" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+                        <Button Classes="primary" Content="{Binding WarningContinue}" Command="{Binding ConfirmWarning}"
+                                MinWidth="110" Height="28" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Border>
     </Grid>
 </Window>
-

@@ -1,0 +1,115 @@
+{
+  "name": "DELTARUNE Russian Translation",
+  "gameId": "deltarune",
+  "version": "1.2.0",
+  "requiredSpaceMB": 69,
+  "detection": {
+    "windowsExe": "DELTARUNE.exe",
+    "macApp": "DELTARUNE.app",
+    "steamAppId": "1672970"
+  },
+  "targets": [
+    {
+      "id": "selector",
+      "title": "Выбор главы",
+      "relativePath": "data.win",
+      "macRelativePath": "game.ios",
+      "patchConfig": "patches/ch_sel/data.win.json",
+      "macPatchConfig": "patches/ch_sel/data.mac.json",
+      "backupFile": "data.orig.win",
+      "macBackupFile": "game.orig.ios",
+      "required": true
+    },
+    {
+      "id": "ch1",
+      "title": "Глава 1",
+      "relativePath": "chapter1_windows/data.win",
+      "macRelativePath": "chapter1_mac/game.ios",
+      "patchConfig": "patches/ch1/data.win.json",
+      "macPatchConfig": "patches/ch1/data.mac.json",
+      "backupFile": "chapter1_windows/data.orig.win",
+      "macBackupFile": "chapter1_mac/game.orig.ios",
+      "required": true
+    },
+    {
+      "id": "ch2",
+      "title": "Глава 2",
+      "relativePath": "chapter2_windows/data.win",
+      "macRelativePath": "chapter2_mac/game.ios",
+      "patchConfig": "patches/ch2/data.win.json",
+      "macPatchConfig": "patches/ch2/data.mac.json",
+      "backupFile": "chapter2_windows/data.orig.win",
+      "macBackupFile": "chapter2_mac/game.orig.ios",
+      "required": true
+    },
+    {
+      "id": "ch3",
+      "title": "Глава 3",
+      "relativePath": "chapter3_windows/data.win",
+      "macRelativePath": "chapter3_mac/game.ios",
+      "patchConfig": "patches/ch3/data.win.json",
+      "macPatchConfig": "patches/ch3/data.mac.json",
+      "backupFile": "chapter3_windows/data.orig.win",
+      "macBackupFile": "chapter3_mac/game.orig.ios",
+      "required": true
+    },
+    {
+      "id": "ch4",
+      "title": "Глава 4",
+      "relativePath": "chapter4_windows/data.win",
+      "macRelativePath": "chapter4_mac/game.ios",
+      "patchConfig": "patches/ch4/data.win.json",
+      "macPatchConfig": "patches/ch4/data.mac.json",
+      "backupFile": "chapter4_windows/data.orig.win",
+      "macBackupFile": "chapter4_mac/game.orig.ios",
+      "required": true
+    },
+    {
+      "id": "ch5",
+      "title": "Глава 5",
+      "relativePath": "chapter5_windows/data.win",
+      "macRelativePath": "chapter5_mac/game.ios",
+      "patchConfig": "patches/ch5/data.win.json",
+      "macPatchConfig": "patches/ch5/data.mac.json",
+      "backupFile": "chapter5_windows/data.orig.win",
+      "macBackupFile": "chapter5_mac/game.orig.ios",
+      "required": true
+    }
+  ],
+  "copyOperations": {
+    "folders": [
+      {
+        "source": "patches/copy/chapter1",
+        "dest": "chapter1_windows",
+        "macDest": "chapter1_mac"
+      },
+      {
+        "source": "patches/copy/chapter2",
+        "dest": "chapter2_windows",
+        "macDest": "chapter2_mac"
+      },
+      {
+        "source": "patches/copy/chapter3",
+        "dest": "chapter3_windows",
+        "macDest": "chapter3_mac"
+      },
+      {
+        "source": "patches/copy/chapter4",
+        "dest": "chapter4_windows",
+        "macDest": "chapter4_mac"
+      },
+      {
+        "source": "patches/copy/chapter5",
+        "dest": "chapter5_windows",
+        "macDest": "chapter5_mac"
+      }
+    ],
+    "files": [
+      {
+        "source": "patches/copy/ru_data.json",
+        "dest": "ru_data.json",
+        "macDest": "ru_data.json"
+      }
+    ]
+  }
+}

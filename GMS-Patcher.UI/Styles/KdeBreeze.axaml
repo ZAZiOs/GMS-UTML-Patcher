@@ -1,0 +1,376 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI, Noto Sans, Ubuntu, Cantarell, -apple-system, sans-serif" />
+        <Setter Property="Foreground" Value="#232629" />
+    </Style>
+
+    <Style Selector="Button">
+        <Setter Property="FontFamily" Value="Segoe UI, Noto Sans, Ubuntu, Cantarell, -apple-system, sans-serif" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Foreground" Value="#232629" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="#B2B6BA" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="12, 4" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#FCFDFD" />
+                <GradientStop Offset="0.3" Color="#F4F6F7" />
+                <GradientStop Offset="1.0" Color="#E5E8EB" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#FFFFFF" />
+                <GradientStop Offset="0.3" Color="#F7F9FA" />
+                <GradientStop Offset="1.0" Color="#EDEFF2" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#3DAEE9" />
+        <Setter Property="TextBlock.Foreground" Value="#1D2023" />
+    </Style>
+
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#D3D7DB" />
+                <GradientStop Offset="0.4" Color="#DBDFE3" />
+                <GradientStop Offset="1.0" Color="#E6E9EC" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#959A9F" />
+        <Setter Property="TextBlock.Foreground" Value="#1D2023" />
+    </Style>
+
+    <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#F6F7F9" />
+                <GradientStop Offset="1.0" Color="#EBECEF" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#D5D8DC" />
+        <Setter Property="TextBlock.Foreground" Value="#9EA3A8" />
+    </Style>
+
+    <Style Selector="Button.primary">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#1B82C9" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#4CB5EB" />
+                <GradientStop Offset="0.4" Color="#3DAEE9" />
+                <GradientStop Offset="1.0" Color="#1D99F3" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#5EC2F2" />
+                <GradientStop Offset="0.4" Color="#4BB6EE" />
+                <GradientStop Offset="1.0" Color="#28A3FA" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#156EA8" />
+        <Setter Property="TextBlock.Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#1680CA" />
+                <GradientStop Offset="0.5" Color="#1A8EDB" />
+                <GradientStop Offset="1.0" Color="#219DF0" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#0F5C8F" />
+        <Setter Property="TextBlock.Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <Style Selector="Button.link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Height" Value="NaN" />
+        <Setter Property="Foreground" Value="#1D99F3" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="TextBlock.Foreground" Value="#0E78C2" />
+        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+    </Style>
+
+    <Style Selector="Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="TextBlock.Foreground" Value="#0A5B96" />
+    </Style>
+
+    <Style Selector="TextBox">
+        <Setter Property="FontFamily" Value="Segoe UI, Noto Sans, Ubuntu, sans-serif" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="#232629" />
+        <Setter Property="Background" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#B8BCBF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="8, 5" />
+        <Setter Property="SelectionBrush" Value="#3DAEE9" />
+    </Style>
+
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="#3DAEE9" />
+    </Style>
+
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="#1D99F3" />
+        <Setter Property="Background" Value="#FFFFFF" />
+    </Style>
+
+    <Style Selector="ProgressBar">
+        <Setter Property="Height" Value="25" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="#969BA0" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#C0C4C8" />
+                <GradientStop Offset="0.10" Color="#E2E5E8" />
+                <GradientStop Offset="0.25" Color="#F7F8F9" />
+                <GradientStop Offset="1.0" Color="#FFFFFF" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Foreground">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#5CEB61" />
+                <GradientStop Offset="0.08" Color="#47DF4D" />
+                <GradientStop Offset="0.5" Color="#2EC834" />
+                <GradientStop Offset="1.0" Color="#20B026" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="ProgressBar /template/ Border#PART_Indicator">
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="BorderThickness" Value="0, 0, 1, 0" />
+        <Setter Property="BorderBrush" Value="#178A1D" />
+    </Style>
+
+    <Style Selector="ProgressBar /template/ Border#ProgressBarRoot">
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+
+    <Style Selector="CheckBox">
+        <Setter Property="FontFamily" Value="Segoe UI, Noto Sans, Ubuntu, sans-serif" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="#232629" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="8, 0, 0, 0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="CheckBox /template/ Path#CheckGlyph">
+        <Setter Property="RenderTransform" Value="translateY(0px)" />
+    </Style>
+
+    <Style Selector="CheckBox /template/ Border#NormalRectangle">
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#92979C" />
+                <GradientStop Offset="1.0" Color="#B8BCC0" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#E5E9EC" />
+                <GradientStop Offset="0.2" Color="#F4F6F8" />
+                <GradientStop Offset="1.0" Color="#FFFFFF" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.1" />
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox:pointerover /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="#3DAEE9" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#EFF6FB" />
+                <GradientStop Offset="0.3" Color="#F8FAFC" />
+                <GradientStop Offset="1.0" Color="#FFFFFF" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BoxShadow" Value="0 0 3 0 #403DAEE9" />
+    </Style>
+
+    <Style Selector="CheckBox:pressed /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="#7E8388" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#D2D6DA" />
+                <GradientStop Offset="0.4" Color="#DBDFE3" />
+                <GradientStop Offset="1.0" Color="#E6E9EC" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#2296DE" />
+                <GradientStop Offset="0.5" Color="#1679BD" />
+                <GradientStop Offset="1.0" Color="#0B578C" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#50BCF6" />
+                <GradientStop Offset="0.2" Color="#38A8EC" />
+                <GradientStop Offset="0.6" Color="#1D94E2" />
+                <GradientStop Offset="1.0" Color="#127CC5" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BoxShadow" Value="0 1 2 0 #28000000" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#30A8F2" />
+                <GradientStop Offset="0.5" Color="#1E89D4" />
+                <GradientStop Offset="1.0" Color="#1068A3" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#68CAFC" />
+                <GradientStop Offset="0.2" Color="#49B6F4" />
+                <GradientStop Offset="0.6" Color="#29A2EC" />
+                <GradientStop Offset="1.0" Color="#1A88D4" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BoxShadow" Value="0 0 4 0 #503DAEE9" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pressed /template/ Border#NormalRectangle">
+        <Setter Property="BorderBrush" Value="#0A4C7A" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#116EB3" />
+                <GradientStop Offset="0.5" Color="#1680CA" />
+                <GradientStop Offset="1.0" Color="#1F94E2" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+        <Setter Property="Fill">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#FFFFFF" />
+                <GradientStop Offset="1.0" Color="#E8F4FC" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pointerover /template/ Path#CheckGlyph">
+        <Setter Property="Fill" Value="#FFFFFF" />
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pressed /template/ Path#CheckGlyph">
+        <Setter Property="Fill" Value="#E2F1FC" />
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="Border.kde-header">
+        <Setter Property="Height" Value="68" />
+        <Setter Property="BorderBrush" Value="#D0D4D8" />
+        <Setter Property="BorderThickness" Value="0, 0, 0, 1" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#FFFFFF" />
+                <GradientStop Offset="0.8" Color="#FDFDFE" />
+                <GradientStop Offset="1.0" Color="#F2F4F7" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.kde-footer">
+        <Setter Property="Height" Value="48" />
+        <Setter Property="BorderBrush" Value="#D0D4D8" />
+        <Setter Property="BorderThickness" Value="0, 1, 0, 0" />
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#F4F5F7" />
+                <GradientStop Offset="0.4" Color="#ECEEF1" />
+                <GradientStop Offset="1.0" Color="#E3E6E9" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.kde-banner-left">
+        <Setter Property="Width" Value="177" />
+        <Setter Property="Background" Value="#E2E5E8" />
+        <Setter Property="BorderBrush" Value="#D0D4D8" />
+        <Setter Property="BorderThickness" Value="0, 0, 1, 0" />
+    </Style>
+
+    <Style Selector="Border.kde-dropzone">
+        <Setter Property="Background" Value="#EFF0F1" />
+        <Setter Property="BorderBrush" Value="#C2C6CA" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.kde-dropzone:pointerover">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.0" Color="#F2F9FD" />
+                <GradientStop Offset="1.0" Color="#E8F4FC" />
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#3DAEE9" />
+        <Setter Property="BoxShadow" Value="0 2 6 0 #253DAEE9" />
+    </Style>
+
+</Styles>

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using GMS_Patcher.UI.Services;
@@ -18,16 +20,16 @@ public class MainWindowViewModel : ViewModelBase
     private WizardStep _currentStep = WizardStep.Intro;
     private string _selectedGameFolder = string.Empty;
     private string _pathFieldText = string.Empty;
-    private string _dropLabelText = "Перетащите иконку игры, чтобы указать путь к папке";
+    private string _dropLabelText = string.Empty;
+    private string _dropClassicLinkText = string.Empty;
     private bool _isGameFound = false;
-    private string _spaceRequiredText = "Требуется места: 900 Мбайт";
-    private string _spaceAvailableText = "Доступно места: -- Мбайт";
+    private string _spaceRequiredText = string.Empty;
+    private string _spaceAvailableText = string.Empty;
     private bool _isAdminWarningVisible = false;
 
-    // Installation
     private int _progressPercentage = 0;
     private int _targetProgress = 0;
-    private string _statusText = "Подготовка к установке...";
+    private string _statusText = string.Empty;
     private string _detailedLogs = string.Empty;
     private bool _isDetailsVisible = false;
     private bool _isInstallFinished = false;
@@ -37,37 +39,43 @@ public class MainWindowViewModel : ViewModelBase
     private List<(Bitmap frame, int delayMs)> _mascotFrames = new();
     private int _currentMascotFrameIndex = 0;
 
-    // Interactive Warning
     private bool _isWarningModalVisible = false;
     private string _warningTitle = string.Empty;
     private string _warningSubtitle = string.Empty;
     private TaskCompletionSource<bool>? _warningTcs;
 
-    // End Success / Fail
     private bool _startGameChecked = true;
     private string _errorCodeText = string.Empty;
     private string _errorDetailsText = string.Empty;
 
-    // Suite config
     private PatchSuiteConfig _suiteConfig = new();
     private CancellationTokenSource? _cts;
 
     public MainWindowViewModel()
     {
-        // 1. Load theme assets
-        IntroBanner = ThemeManager.GetBitmap("preview.png");
-        HeaderIcon = ThemeManager.GetBitmap("icon.png");
-        DefaultDropIcon = ThemeManager.GetBitmap("drop_icon.png");
-        GameFoundDropIcon = ThemeManager.GetBitmap("drop_icon_game.png");
-        ErrorDropIcon = ThemeManager.GetBitmap("drop_icon_err.png");
+
+        _dropLabelText = ThemeManager.DropDefaultLabel;
+        _dropClassicLinkText = ThemeManager.DropClassicLink;
+        _statusText = ThemeManager.InstallInitialStatus;
+        string reqFormatted = _suiteConfig.RequiredSpaceMB >= 1024
+    ? string.Create(CultureInfo.InvariantCulture, $"{_suiteConfig.RequiredSpaceMB / 1024.0:0.0} GB")
+    : string.Create(CultureInfo.InvariantCulture, $"{_suiteConfig.RequiredSpaceMB:0.0} MB");
+        _spaceRequiredText = ThemeManager.SpaceRequired(reqFormatted);
+        _spaceAvailableText = ThemeManager.SpaceNoDisk;
+
+        IntroBanner = ThemeManager.GetImageBitmap("banner", "image1.png", "preview.png", "banner.png", "image_intro.png");
+        HeaderBanner = ThemeManager.GetImageBitmap("headerBanner", "headerIcon", "icon.png", "header.png", "header_banner.png");
+        WindowIcon = ThemeManager.GetWindowIcon("exe-icon", "main.ico", "cozyinn.ico", "app.ico");
+        DefaultDropIcon = ThemeManager.GetImageBitmap("dropDefault", "drop_icon.png", "drop.png");
+        GameFoundDropIcon = ThemeManager.GetImageBitmap("dropSuccess", "drop_icon_game.png", "drop_game.png");
+        ErrorDropIcon = ThemeManager.GetImageBitmap("dropError", "drop_icon_err.png", "drop_error.png");
         CurrentDropIcon = DefaultDropIcon;
 
-        SuccessImage = ThemeManager.GetBitmap("queen_sprite.png");
-        FailImage = ThemeManager.GetBitmap("queen_sprite_error.png");
-        WarningImage = ThemeManager.GetBitmap("mnogo_voprosoff_warning.png");
+        SuccessImage = ThemeManager.GetImageBitmap("bannerSuccess", "image1.png", "preview.png", "banner.png", "queen_sprite.png");
+        FailImage = ThemeManager.GetImageBitmap("bannerFail", "image2.png", "preview2.png", "banner_error.png", "queen_sprite_error.png");
+        WarningImage = ThemeManager.GetImageBitmap("warning", "mnogo_voprosoff_warning.png", "warning.png");
 
-        // 2. Load animated mascot frames
-        _mascotFrames = ThemeManager.GetGifFrames("lytaya_animka_ralsei2009.gif");
+        _mascotFrames = ThemeManager.GetGifAnimation("mascot", "lytaya_animka_ralsei2009.gif", "mascot.gif", "animation.gif");
         if (_mascotFrames.Count > 0)
         {
             StatusMascot = _mascotFrames[0].frame;
@@ -77,7 +85,6 @@ public class MainWindowViewModel : ViewModelBase
             StatusMascot = ThemeManager.GetBitmap("icon.png");
         }
 
-        // 3. Setup mascot animation timer
         _mascotTimer = new DispatcherTimer();
         _mascotTimer.Tick += OnMascotTimerTick;
         if (_mascotFrames.Count > 1)
@@ -86,27 +93,23 @@ public class MainWindowViewModel : ViewModelBase
             _mascotTimer.Start();
         }
 
-        // 4. Setup smooth progress timer
         _smoothTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(8)
         };
         _smoothTimer.Tick += OnSmoothTimerTick;
 
-        // 5. Check administrator privilege
         IsAdminWarningVisible = AdminPrivilegeHelper.IsAdministrator;
 
-        // 6. Hook log events to detailed logs
         Out.OnLog += OnOutLogReceived;
 
-        // 7. Try load patch_suite.json or auto-discover
         LoadDefaultSuite();
+        UpdateSpaceIndicators(null);
 
-        // 8. Auto-search Steam installation
         SearchInitialGameFolder();
     }
 
-    #region Properties
+    #region Properties & Localized Strings
 
     public WizardStep CurrentStep
     {
@@ -122,6 +125,10 @@ public class MainWindowViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsEndSuccess));
                 OnPropertyChanged(nameof(IsEndFail));
                 OnPropertyChanged(nameof(CanGoNext));
+                OnPropertyChanged(nameof(NextButtonText));
+                OnPropertyChanged(nameof(ShowLeftCancelButton));
+                OnPropertyChanged(nameof(ShowBackButton));
+                OnPropertyChanged(nameof(ShowNextButton));
             }
         }
     }
@@ -133,19 +140,66 @@ public class MainWindowViewModel : ViewModelBase
     public bool IsEndSuccess => CurrentStep == WizardStep.EndSuccess;
     public bool IsEndFail => CurrentStep == WizardStep.EndFail;
 
-    public string WindowTitle => ThemeManager.Config.Texts.WindowTitle;
-    public string IntroTitle => ThemeManager.Config.Texts.IntroTitle;
-    public string IntroSubtitle => ThemeManager.Config.Texts.IntroSubtitle;
-    public string Version => ThemeManager.Config.Texts.Version;
-    public string IssuesUrl => ThemeManager.Config.Links.Issues;
-    public string CommunityUrl => ThemeManager.Config.Links.Community;
-    public string CommunityText => ThemeManager.Config.Links.CommunityText;
-    public string SuccessTitle => ThemeManager.Config.Texts.SuccessTitle;
-    public string SuccessSubtitle => ThemeManager.Config.Texts.SuccessSubtitle;
-    public string StartGameCheckbox => ThemeManager.Config.Texts.StartGameCheckbox;
+    public bool ShowLeftCancelButton => !IsEndSuccess && !IsEndFail;
+    public bool ShowBackButton => !IsIntro && !IsEndSuccess && !IsEndFail;
+    public bool ShowNextButton => !IsEndSuccess && !IsEndFail;
+
+    public string WindowTitle => ThemeManager.WindowTitle;
+    public string IntroTitle => ThemeManager.IntroTitle;
+    public string IntroSubtitle => ThemeManager.IntroSubtitle;
+    public string IntroIssuesLink => ThemeManager.IntroIssuesLink;
+    public string IntroVersionLabel => ThemeManager.IntroVersionLabel;
+    public string IntroNextPrompt => ThemeManager.IntroNextPrompt;
+    public string Version => ThemeManager.Version;
+
+    public string DropHeaderTitle => ThemeManager.DropHeaderTitle;
+    public string DropHeaderSubtitle => ThemeManager.DropHeaderSubtitle;
+    public string DropGroupBoxTitle => ThemeManager.DropGroupBoxTitle;
+    public string CopyrightText => ThemeManager.Copyright;
+    public string DropClassicLinkText
+    {
+        get => _dropClassicLinkText;
+        set => SetField(ref _dropClassicLinkText, value);
+    }
+
+    public string PathHeaderTitle => ThemeManager.PathHeaderTitle;
+    public string PathHeaderSubtitle => ThemeManager.PathHeaderSubtitle;
+    public string PathLabel => ThemeManager.PathLabel;
+    public string PathBrowseBtn => ThemeManager.PathBrowseBtn;
+    public string PathBackToDropLink => ThemeManager.PathBackToDropLink;
+
+    public string InstallHeaderTitle => ThemeManager.InstallHeaderTitle;
+    public string InstallHeaderSubtitle => ThemeManager.InstallHeaderSubtitle;
+
+    public string SuccessTitle => ThemeManager.SuccessTitle;
+    public string SuccessSubtitle => ThemeManager.SuccessSubtitle;
+    public string CommunityLink => ThemeManager.CommunityLink;
+    public string CommunityText => ThemeManager.CommunityLink;
+    public string SuccessFinishPrompt => ThemeManager.SuccessFinishPrompt;
+    public string StartGameCheckbox => ThemeManager.StartGameCheckbox;
+
+    public string FailTitle => ThemeManager.FailTitle;
+    public string FailIssuesLink => ThemeManager.FailIssuesLink;
+
+    public string BtnNext => ThemeManager.BtnNext;
+    public string BtnBack => ThemeManager.BtnBack;
+    public string BtnInstall => ThemeManager.BtnInstall;
+    public string BtnExit => ThemeManager.BtnExit;
+    public string BtnCancel => ThemeManager.BtnCancel;
+    public string BtnFinish => ThemeManager.BtnFinish;
+
+    public string WarningContinue => ThemeManager.WarningContinue;
+    public string WarningCancel => ThemeManager.WarningCancel;
+
+    public string AdminWarningText => ThemeManager.AdminWarning;
+    public string IssuesUrl => ThemeManager.IssuesUrl;
+    public string CommunityUrl => ThemeManager.CommunityUrl;
 
     public Bitmap? IntroBanner { get; }
-    public Bitmap? HeaderIcon { get; }
+    public Bitmap? HeaderBanner { get; }
+    public Bitmap? HeaderIcon => HeaderBanner;
+    public Bitmap? ExeIcon => HeaderBanner;
+    public WindowIcon? WindowIcon { get; }
     public Bitmap? DefaultDropIcon { get; }
     public Bitmap? GameFoundDropIcon { get; }
     public Bitmap? ErrorDropIcon { get; }
@@ -211,6 +265,15 @@ public class MainWindowViewModel : ViewModelBase
         _ => true
     };
 
+    public string NextButtonText => CurrentStep switch
+    {
+        WizardStep.DropLink => ThemeManager.BtnInstall,
+        WizardStep.SelectPath => ThemeManager.BtnInstall,
+        _ => ThemeManager.BtnNext
+    };
+
+    public string DetailsButtonText => IsDetailsVisible ? ThemeManager.DetailsBtnHide : ThemeManager.DetailsBtnShow;
+
     public bool IsAdminWarningVisible
     {
         get => _isAdminWarningVisible;
@@ -258,7 +321,13 @@ public class MainWindowViewModel : ViewModelBase
     public bool IsDetailsVisible
     {
         get => _isDetailsVisible;
-        set => SetField(ref _isDetailsVisible, value);
+        set
+        {
+            if (SetField(ref _isDetailsVisible, value))
+            {
+                OnPropertyChanged(nameof(DetailsButtonText));
+            }
+        }
     }
 
     public bool IsInstallFinished
@@ -368,13 +437,34 @@ public class MainWindowViewModel : ViewModelBase
         closeWindow();
     }
 
-    public void OpenUrl(string url)
+    public void OpenIssuesUrl() => OpenUrl(IssuesUrl);
+
+    public void OpenCommunityUrl() => OpenUrl(CommunityUrl);
+
+    public void OpenUrl(string? url)
     {
+        if (string.IsNullOrWhiteSpace(url))
+            url = IssuesUrl;
+
         try
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                try
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                    return;
+                }
+                catch
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "cmd",
+                        Arguments = $"/c start \"\" \"{url.Replace("&", "^&")}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    });
+                }
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -385,7 +475,20 @@ public class MainWindowViewModel : ViewModelBase
                 Process.Start("xdg-open", url);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to open URL '{url}': {ex.Message}");
+        }
+    }
+
+    public void ConfirmWarning()
+    {
+        WarningConfirm(true);
+    }
+
+    public void CancelWarning()
+    {
+        WarningConfirm(false);
     }
 
     public void WarningConfirm(bool continuePatching)
@@ -409,7 +512,9 @@ public class MainWindowViewModel : ViewModelBase
         {
             IsGameFound = false;
             CurrentDropIcon = DefaultDropIcon;
-            DropLabelText = "Перетащите иконку игры, чтобы указать путь к папке";
+            DropLabelText = ThemeManager.DropDefaultLabel;
+            DropClassicLinkText = ThemeManager.DropClassicLink;
+            UpdateSpaceIndicators(null);
             return;
         }
 
@@ -428,24 +533,48 @@ public class MainWindowViewModel : ViewModelBase
             IsGameFound = true;
             CurrentDropIcon = GameFoundDropIcon;
             DropLabelText = normalized;
-
-            long freeSpace = SafeFileOperations.GetFreeSpaceMB(normalized);
-            SpaceAvailableText = freeSpace >= 0 ? $"Доступно места: {freeSpace} Мбайт" : "Доступно места: -- Мбайт";
-            SpaceRequiredText = $"Требуется места: {_suiteConfig.RequiredSpaceMB} Мбайт";
+            DropClassicLinkText = ThemeManager.DropFoundClassicLink;
+            UpdateSpaceIndicators(normalized);
         }
         else
         {
             SelectedGameFolder = normalized;
             IsGameFound = false;
             CurrentDropIcon = ErrorDropIcon;
-            DropLabelText = validation.ErrorMessage ?? "Не удалось найти игру, попробуйте ещё раз";
-            SpaceAvailableText = "Доступно места: -- Мбайт";
+            DropLabelText = validation.ErrorMessage ?? ThemeManager.DropErrorLabel;
+            DropClassicLinkText = ThemeManager.DropClassicLink;
+            UpdateSpaceIndicators(normalized);
+        }
+    }
+
+    private void UpdateSpaceIndicators(string? folderPath)
+    {
+        string reqFormatted = _suiteConfig.RequiredSpaceMB >= 1024
+            ? $"{(_suiteConfig.RequiredSpaceMB / 1024.0):0.0} GB"
+            : $"{_suiteConfig.RequiredSpaceMB:0.0} MB";
+        SpaceRequiredText = ThemeManager.SpaceRequired(reqFormatted);
+
+        string probePath = !string.IsNullOrWhiteSpace(folderPath)
+            ? folderPath
+            : AppDomain.CurrentDomain.BaseDirectory;
+
+        long freeSpace = SafeFileOperations.GetFreeSpaceMB(probePath);
+        if (freeSpace >= 0)
+        {
+            string freeFormatted = freeSpace >= 1024
+                ? $"{(freeSpace / 1024.0):0.0} Гбайт"
+                : $"{freeSpace:0.0} Мбайт";
+            SpaceAvailableText = ThemeManager.SpaceAvailable(freeFormatted);
+        }
+        else
+        {
+            SpaceAvailableText = ThemeManager.SpaceNoDisk;
         }
     }
 
     private void SearchInitialGameFolder()
     {
-        string? steamFound = SteamLibraryDetector.FindGameDirectory("DELTARUNE", "1672970");
+        string? steamFound = SteamLibraryDetector.FindGameDirectory(ThemeManager.GameName);
         if (!string.IsNullOrEmpty(steamFound))
         {
             EvaluateGameFolder(steamFound);
@@ -454,61 +583,38 @@ public class MainWindowViewModel : ViewModelBase
 
     private void LoadDefaultSuite()
     {
-        string baseDir = AppContext.BaseDirectory;
-        string suitePath = Path.Combine(baseDir, "patch_suite.json");
-
-        if (File.Exists(suitePath))
+        string? suitePath = PatchSuiteConfig.FindSuiteConfigFile();
+        if (!string.IsNullOrEmpty(suitePath))
         {
             var loaded = PatchSuiteConfig.LoadFromFile(suitePath);
             if (loaded != null)
-                _suiteConfig = loaded;
-        }
-        else
-        {
-            // Default built-in DELTARUNE fallback suite
-            _suiteConfig = new PatchSuiteConfig
             {
-                Name = "DELTARUNE: Ручной перевод",
-                GameId = "deltarune",
-                RequiredSpaceMB = 850,
-                Targets = new List<PatchTargetConfig>
-                {
-                    new()
-                    {
-                        Id = "selector",
-                        Title = "Выбор главы",
-                        RelativePath = "data.win",
-                        MacRelativePath = "game.ios",
-                        PatchConfig = "patches/ch_sel/data.win.json",
-                        BackupFile = "data.orig.win",
-                        MacBackupFile = "game.orig.ios",
-                        Required = true
-                    },
-                    new()
-                    {
-                        Id = "ch1",
-                        Title = "Глава 1",
-                        RelativePath = "chapter1_windows/data.win",
-                        MacRelativePath = "chapter1_mac/game.ios",
-                        PatchConfig = "patches/ch1/data.win.json",
-                        BackupFile = "chapter1_windows/data.orig.win",
-                        MacBackupFile = "chapter1_mac/game.orig.ios",
-                        Required = true
-                    },
-                    new()
-                    {
-                        Id = "ch2",
-                        Title = "Глава 2",
-                        RelativePath = "chapter2_windows/data.win",
-                        MacRelativePath = "chapter2_mac/game.ios",
-                        PatchConfig = "patches/ch2/data.win.json",
-                        BackupFile = "chapter2_windows/data.orig.win",
-                        MacBackupFile = "chapter2_mac/game.orig.ios",
-                        Required = false
-                    }
-                }
-            };
+                _suiteConfig = loaded;
+                return;
+            }
         }
+
+        _suiteConfig = new PatchSuiteConfig
+        {
+            Name = $"{ThemeManager.GameName} Patch",
+            GameId = "game",
+            RequiredSpaceMB = 500,
+            Targets = new List<PatchTargetConfig>
+            {
+                new()
+                {
+                    Id = "main",
+                    Title = "Main Game",
+                    RelativePath = "data.win",
+                    MacRelativePath = "game.ios",
+                    PatchConfig = "patches/data.win.json",
+                    MacPatchConfig = "patches/game.ios.json",
+                    BackupFile = "data.orig.win",
+                    MacBackupFile = "game.orig.ios",
+                    Required = true
+                }
+            }
+        };
     }
 
     #endregion
@@ -519,7 +625,7 @@ public class MainWindowViewModel : ViewModelBase
     {
         ProgressPercentage = 0;
         _targetProgress = 0;
-        StatusText = "Запуск процесса установки...";
+        StatusText = ThemeManager.InstallInitialStatus;
         IsInstallFinished = false;
         _smoothTimer.Start();
 
@@ -538,7 +644,7 @@ public class MainWindowViewModel : ViewModelBase
                     });
                 });
 
-                int result = await MultiPatchRunner.ApplySuiteAsync(
+                var patchResult = await MultiPatchRunner.ApplySuiteAsync(
                     SelectedGameFolder,
                     _suiteConfig,
                     progressReporter,
@@ -548,17 +654,17 @@ public class MainWindowViewModel : ViewModelBase
 
                 Dispatcher.UIThread.Post(() =>
                 {
-                    if (result == 0)
+                    if (patchResult.ExitCode == 0)
                     {
                         _targetProgress = 100;
                         ProgressPercentage = 100;
-                        StatusText = "Патчинг завершён!";
+                        StatusText = ThemeManager.InstallFinishedStatus;
                         IsInstallFinished = true;
                         CurrentStep = WizardStep.EndSuccess;
                     }
                     else
                     {
-                        OnInstallationFailed(result, $"Ошибка установки (код {result})");
+                        OnInstallationFailed(patchResult.ExitCode, patchResult.ErrorMessage ?? $"Installation failed (code {patchResult.ExitCode})");
                     }
                 });
             }
@@ -578,14 +684,20 @@ public class MainWindowViewModel : ViewModelBase
         {
             WarningTitle = errorCode switch
             {
-                204 => "Обнаружена модификация!",
-                205 => "Версия игры и перевода не совпадает!",
-                206 => "Версия игры устарела!",
+                204 => ThemeManager.WarningTitleMod,
+                205 or 206 => ThemeManager.WarningTitleVersion,
                 _ => "Внимание!"
             };
 
-            WarningSubtitle = message;
-            _warningTcs = new TaskCompletionSource<bool>();
+            WarningSubtitle = errorCode switch
+            {
+                204 => ThemeManager.WarningMessageMod,
+                205 => ThemeManager.WarningMessageNewerVersion,
+                206 => ThemeManager.WarningMessageVersionMismatch,
+                _ => string.IsNullOrWhiteSpace(message) ? ThemeManager.WarningMessageGeneric : message
+            };
+
+            _warningTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             IsWarningModalVisible = true;
 
             return await _warningTcs.Task;
@@ -594,10 +706,11 @@ public class MainWindowViewModel : ViewModelBase
 
     private void OnInstallationFailed(int errorCode, string message)
     {
-        StatusMascot = ThemeManager.GetBitmap("ralsei_down.png");
+        _smoothTimer.Stop();
         _mascotTimer.Stop();
+        StatusMascot = ThemeManager.GetImageBitmap("mascotFail", "ralsei_down.png", "mascot_fail.png", "fail.png");
 
-        ErrorCodeText = $"Код ошибки: {errorCode}";
+        ErrorCodeText = ThemeManager.Get("errorCodeFormat", ("{CODE}", errorCode.ToString()));
         ErrorDetailsText = message;
         IsInstallFinished = true;
         IsDetailsVisible = true;
@@ -610,7 +723,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                string exeName = ThemeManager.Config.Texts.GameExecutable;
+                string exeName = ThemeManager.GameExe;
                 string exePath = Path.Combine(SelectedGameFolder, exeName);
                 if (File.Exists(exePath))
                 {
@@ -665,4 +778,3 @@ public class MainWindowViewModel : ViewModelBase
 
     #endregion
 }
-

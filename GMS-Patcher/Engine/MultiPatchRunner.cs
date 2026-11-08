@@ -18,6 +18,21 @@ public class GameValidationResult
     public string? ErrorMessage { get; set; }
 }
 
+public class PatchSuiteResult
+{
+    public int ExitCode { get; set; }
+    public string? ErrorMessage { get; set; }
+
+    public PatchSuiteResult(int exitCode, string? errorMessage = null)
+    {
+        ExitCode = exitCode;
+        ErrorMessage = errorMessage;
+    }
+
+    public static implicit operator int(PatchSuiteResult r) => r.ExitCode;
+    public static implicit operator PatchSuiteResult(int code) => new(code);
+}
+
 public static class MultiPatchRunner
 {
     public static bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
@@ -29,7 +44,6 @@ public static class MultiPatchRunner
 
         inputPath = inputPath.Trim('\"', '\'', ' ');
 
-        // 1. Resolve .lnk or .url shortcuts
         string? resolved = ShortcutResolver.ResolveShortcut(inputPath);
         if (!string.IsNullOrEmpty(resolved))
         {
@@ -46,16 +60,14 @@ public static class MultiPatchRunner
             }
         }
 
-        // 2. If it's a file, get directory or handle .app
         if (File.Exists(inputPath))
         {
             inputPath = Path.GetDirectoryName(inputPath) ?? inputPath;
         }
 
-        // 3. macOS specific normalization:
         if (IsMacOS)
         {
-            // If path ends with Contents/Resources, find .app
+
             if (inputPath.EndsWith("Contents/Resources", StringComparison.OrdinalIgnoreCase) ||
                 inputPath.EndsWith("Contents" + Path.DirectorySeparatorChar + "Resources", StringComparison.OrdinalIgnoreCase))
             {
@@ -79,11 +91,10 @@ public static class MultiPatchRunner
         if (string.IsNullOrEmpty(normalized) || !Directory.Exists(normalized))
         {
             result.IsValid = false;
-            result.ErrorMessage = "Указанная папка игры не существует.";
+            result.ErrorMessage = "Specified game folder does not exist.";
             return result;
         }
 
-        // Check required target files
         foreach (var target in suite.Targets)
         {
             if (!target.Required)
@@ -104,7 +115,7 @@ public static class MultiPatchRunner
         if (result.MissingFiles.Count > 0)
         {
             result.IsValid = false;
-            result.ErrorMessage = $"Не найдены обязательные файлы игры: {string.Join(", ", result.MissingFiles)}";
+            result.ErrorMessage = $"Required game files not found: {string.Join(", ", result.MissingFiles)}";
             return result;
         }
 
@@ -118,6 +129,14 @@ public static class MultiPatchRunner
             return target.MacRelativePath;
 
         return target.RelativePath;
+    }
+
+    public static string GetTargetPatchConfig(PatchTargetConfig target)
+    {
+        if (IsMacOS && !string.IsNullOrEmpty(target.MacPatchConfig))
+            return target.MacPatchConfig;
+
+        return target.PatchConfig;
     }
 
     public static string? GetTargetBackupRelativePath(PatchTargetConfig target)
@@ -138,7 +157,7 @@ public static class MultiPatchRunner
         return Path.Combine(gameRoot, relativePath);
     }
 
-    public static async Task<int> ApplySuiteAsync(
+    public static async Task<PatchSuiteResult> ApplySuiteAsync(
         string gameRoot,
         PatchSuiteConfig suite,
         IProgress<PatchProgress>? progress = null,
@@ -149,12 +168,14 @@ public static class MultiPatchRunner
         var validation = ValidateGameFolder(normalizedRoot, suite);
         if (!validation.IsValid)
         {
-            Out.ERROR("SUITE", "gray", 100, validation.ErrorMessage ?? "Validation failed");
-            return 100;
+            string err = validation.ErrorMessage ?? "Validation failed";
+            Out.ERROR("SUITE", "gray", 100, err);
+            return new PatchSuiteResult(100, err);
         }
 
         int totalTargets = suite.Targets.Count;
         int currentTargetIndex = 0;
+        bool userAlreadyConfirmedWarnings = false;
 
         var tempFiles = new List<string>();
         var filesToReplace = new Dictionary<string, string>();
@@ -173,8 +194,9 @@ public static class MultiPatchRunner
                 {
                     if (target.Required)
                     {
-                        Out.ERROR("SUITE", "gray", 100, $"Required target file not found: {targetFullPath}");
-                        return 100;
+                        string err = $"Required target file not found: {targetFullPath}";
+                        Out.ERROR("SUITE", "gray", 100, err);
+                        return new PatchSuiteResult(100, err);
                     }
                     continue;
                 }
@@ -183,19 +205,18 @@ public static class MultiPatchRunner
                 int basePercentage = (int)((currentTargetIndex - 1) / (double)(totalTargets + 1) * 80);
                 string title = string.IsNullOrEmpty(target.Title) ? target.Id : target.Title;
 
-                progress?.Report(new PatchProgress(basePercentage, $"Патчим {title}...", target.Id));
+                progress?.Report(new PatchProgress(basePercentage, $"Patching {title}...", target.Id));
 
-                string patchConfigFile = Path.IsPathRooted(target.PatchConfig)
-                    ? target.PatchConfig
-                    : Path.Combine(suite.SuiteDirectory ?? ".", target.PatchConfig);
+                string configName = GetTargetPatchConfig(target);
+                string? patchConfigFile = suite.ResolvePath(configName);
 
-                if (!File.Exists(patchConfigFile))
+                if (string.IsNullOrEmpty(patchConfigFile) || !File.Exists(patchConfigFile))
                 {
-                    Out.ERROR("SUITE", "gray", 103, $"Patch config file not found: {patchConfigFile}");
-                    return 103;
+                    string err = $"Patch config file not found: {configName}";
+                    Out.ERROR("SUITE", "gray", 103, err);
+                    return new PatchSuiteResult(103, err);
                 }
 
-                // Prepare temp output path
                 string tempOutput = Path.Combine(Path.GetTempPath(), $"gms_patch_{target.Id}_{Guid.NewGuid():N}.win");
                 tempFiles.Add(tempOutput);
 
@@ -204,11 +225,10 @@ public static class MultiPatchRunner
                     DataPath = targetFullPath,
                     PatcherFile = patchConfigFile,
                     OutputPath = tempOutput,
-                    SkipTimestampCheck = false,
-                    SkipHashCheck = false
+                    SkipTimestampCheck = userAlreadyConfirmedWarnings,
+                    SkipHashCheck = userAlreadyConfirmedWarnings
                 };
 
-                // Create sub-progress reporter
                 var subProgress = new Progress<PatchProgress>(p =>
                 {
                     int scaled = basePercentage + (int)(p.Percentage * 0.8 / (totalTargets + 1));
@@ -217,42 +237,51 @@ public static class MultiPatchRunner
 
                 int result = PatcherEngine.ApplyPatch(patchOptions, subProgress, cancellationToken);
 
-                // Handle warning codes 204, 205, 206 with interactive confirmation
                 if (result == 204 || result == 205 || result == 206)
                 {
-                    bool userConfirmed = false;
-                    if (onWarningConfirmation != null)
+                    if (userAlreadyConfirmedWarnings)
                     {
-                        string warnMessage = result switch
+                        patchOptions.SkipTimestampCheck = true;
+                        patchOptions.SkipHashCheck = true;
+                        result = PatcherEngine.ApplyPatch(patchOptions, subProgress, cancellationToken);
+                    }
+                    else
+                    {
+                        bool userConfirmed = false;
+                        if (onWarningConfirmation != null)
                         {
-                            204 => "Хэш файла не совпадает (возможно, игра уже модифицирована). Всё равно продолжить?",
-                            205 => "Версия игры новее, чем версия перевода. Перевод может работать некорректно. Продолжить?",
-                            206 => "Версия игры и перевода не совпадает. Всё равно продолжить?",
-                            _ => "Обнаружено несоответствие версии. Продолжить?"
-                        };
+                            string warnMessage = result switch
+                            {
+                                204 => "Checksum mismatch (the game might already be modified).\nContinue anyway?",
+                                205 => "The game version is newer than the translation version. The patch may not work properly.\nContinue?",
+                                206 => "The game and translation versions do not match.\nContinue anyway?",
+                                _   => "A version mismatch was detected.\nContinue anyway?"
+                            };
 
-                        userConfirmed = await onWarningConfirmation(result, warnMessage);
+                            userConfirmed = await onWarningConfirmation(result, warnMessage);
+                        }
+
+                        if (!userConfirmed)
+                        {
+                            string err = "Installation cancelled by user due to version warning.";
+                            Out.WARN("SUITE", "gray", err);
+                            return new PatchSuiteResult(result, err);
+                        }
+
+                        userAlreadyConfirmedWarnings = true;
+                        patchOptions.SkipTimestampCheck = true;
+                        patchOptions.SkipHashCheck = true;
+                        result = PatcherEngine.ApplyPatch(patchOptions, subProgress, cancellationToken);
                     }
-
-                    if (!userConfirmed)
-                    {
-                        Out.WARN("SUITE", "gray", "Установка отменена пользователем из-за предупреждения версии.");
-                        return result;
-                    }
-
-                    // Retry with skipped checks
-                    patchOptions.SkipTimestampCheck = true;
-                    patchOptions.SkipHashCheck = true;
-                    result = PatcherEngine.ApplyPatch(patchOptions, subProgress, cancellationToken);
                 }
 
                 if (result != 0)
                 {
-                    Out.ERROR("SUITE", "gray", result, $"Ошибка при патчинге цели {target.Id}");
-                    return result;
+                    string err = $"Error patching target '{target.Id}' (code {result})";
+                    Out.ERROR("SUITE", "gray", result, err);
+                    return new PatchSuiteResult(result, err);
                 }
 
-                // Prepare backup
                 string? backupRelative = GetTargetBackupRelativePath(target);
                 if (!string.IsNullOrEmpty(backupRelative))
                 {
@@ -263,24 +292,20 @@ public static class MultiPatchRunner
                 filesToReplace[tempOutput] = targetFullPath;
             }
 
-            // Copy operations
-            progress?.Report(new PatchProgress(85, "Копируем сопутствующие файлы..."));
+            progress?.Report(new PatchProgress(85, "Copying additional files..."));
 
             if (suite.CopyOperations != null)
             {
                 foreach (var folderRule in suite.CopyOperations.Folders)
                 {
-                    string src = Path.IsPathRooted(folderRule.Source)
-                        ? folderRule.Source
-                        : Path.Combine(suite.SuiteDirectory ?? ".", folderRule.Source);
-
+                    string? src = suite.ResolvePath(folderRule.Source);
                     string destRelative = (IsMacOS && !string.IsNullOrEmpty(folderRule.MacDest))
                         ? folderRule.MacDest
                         : folderRule.Dest;
 
                     string dst = ResolveGameFilePath(normalizedRoot, destRelative);
 
-                    if (Directory.Exists(src))
+                    if (!string.IsNullOrEmpty(src) && Directory.Exists(src))
                     {
                         foldersToCopy[src] = dst;
                     }
@@ -288,25 +313,21 @@ public static class MultiPatchRunner
 
                 foreach (var fileRule in suite.CopyOperations.Files)
                 {
-                    string src = Path.IsPathRooted(fileRule.Source)
-                        ? fileRule.Source
-                        : Path.Combine(suite.SuiteDirectory ?? ".", fileRule.Source);
-
+                    string? src = suite.ResolvePath(fileRule.Source);
                     string destRelative = (IsMacOS && !string.IsNullOrEmpty(fileRule.MacDest))
                         ? fileRule.MacDest
                         : fileRule.Dest;
 
                     string dst = ResolveGameFilePath(normalizedRoot, destRelative);
 
-                    if (File.Exists(src))
+                    if (!string.IsNullOrEmpty(src) && File.Exists(src))
                     {
                         filesToReplace[src] = dst;
                     }
                 }
             }
 
-            // Execute atomic batch replacement
-            progress?.Report(new PatchProgress(90, "Применяем изменения к игре..."));
+            progress?.Report(new PatchProgress(90, "Applying changes to game..."));
 
             bool copyOk = SafeFileOperations.ExecuteBatchCopy(
                 filesToReplace,
@@ -316,15 +337,16 @@ public static class MultiPatchRunner
 
             if (!copyOk)
             {
-                Out.ERROR("SUITE", "gray", 104, "Не удалось скопировать файлы (отказ в доступе).");
-                return 104;
+                string err = "Failed to copy patched files (permission denied or I/O error).";
+                Out.ERROR("SUITE", "gray", 104, err);
+                return new PatchSuiteResult(104, err);
             }
 
-            progress?.Report(new PatchProgress(95, "Очистка временных файлов..."));
+            progress?.Report(new PatchProgress(95, "Cleaning up temporary files..."));
         }
         finally
         {
-            // Clean up temporary files
+
             foreach (var temp in tempFiles)
             {
                 try
@@ -336,9 +358,9 @@ public static class MultiPatchRunner
             }
         }
 
-        progress?.Report(new PatchProgress(100, "Установка успешно завершена!"));
+        progress?.Report(new PatchProgress(100, "Installation completed successfully!"));
         Out.SUCCESS("SUITE", "gray", "All targets patched successfully.");
-        return 0;
+        return new PatchSuiteResult(0);
     }
 }
 

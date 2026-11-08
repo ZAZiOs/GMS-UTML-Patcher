@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -16,14 +17,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Set window icon
-        var iconBmp = ThemeManager.GetBitmap("icon.png");
-        if (iconBmp != null)
-        {
-            Icon = new WindowIcon(iconBmp);
-        }
+#if DEBUG
+        this.AttachDevTools();
+#endif
 
-        // Setup Drag & Drop handlers on DropZoneBorder
         var dropBorder = this.FindControl<Border>("DropZoneBorder");
         if (dropBorder != null)
         {

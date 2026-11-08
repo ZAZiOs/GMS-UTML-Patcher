@@ -4,12 +4,6 @@
              RequestedThemeVariant="Light">
     <Application.Styles>
         <FluentTheme />
-        <!-- Custom application styles matching form.ui -->
-        <Style Selector="Button">
-            <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="FontFamily" Value="Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, sans-serif" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
+        <StyleInclude Source="avares://GMS-Patcher.UI/Styles/KdeBreeze.axaml" />
     </Application.Styles>
 </Application>
-

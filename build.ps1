@@ -30,7 +30,14 @@ Publish-Target -Name "CLI Linux x64" -Project $cliProject -Runtime "linux-x64" -
 Publish-Target -Name "CLI Linux arm" -Project $cliProject -Runtime "linux-arm" -OutputDir "./publish/GMS-UTML-Patcher-CLI-linux-arm"
 Publish-Target -Name "CLI Linux arm64" -Project $cliProject -Runtime "linux-arm64" -OutputDir "./publish/GMS-UTML-Patcher-CLI-linux-arm64"
 
-# 3. Create zip archives
+# 3. Copy data/ resources into GUI output directories
+Get-ChildItem -Path "./publish" -Directory | Where-Object { $_.Name -like "GMS-Patcher-UI-*" } | ForEach-Object {
+    if (Test-Path "./data") {
+        Copy-Item -Path "./data" -Destination "$($_.FullName)/data" -Recurse -Force
+    }
+}
+
+# 4. Create zip archives
 $archivesPath = "./publish/archives"
 New-Item -ItemType Directory -Force -Path $archivesPath | Out-Null
 

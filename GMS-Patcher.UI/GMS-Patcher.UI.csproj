@@ -8,11 +8,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\data\resources\main.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.4" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.4" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
   </ItemGroup>
@@ -23,6 +25,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="..\gui-patcher-ref\resources\**\*" Link="Assets\%(RecursiveDir)%(FileName)%(Extension)" />
+    <None Include="..\data\**\*" Link="data\%(RecursiveDir)%(FileName)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
