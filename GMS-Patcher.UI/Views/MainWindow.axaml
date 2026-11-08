@@ -124,12 +124,12 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Stretch="Uniform" />
                             </Border>
-                            <Border Grid.Column="1" Background="#FFFFFF" Padding="16, 12">
-                                <StackPanel VerticalAlignment="Center" Spacing="4">
+                            <Border Grid.Column="1" Background="#FFFFFF" Padding="12, 8">
+                                <StackPanel VerticalAlignment="Center" Spacing="6">
                                     <TextBlock Text="{Binding PathHeaderTitle}"
                                                FontSize="16" FontWeight="Bold" Foreground="#1A1C1E" />
                                     <TextBlock Text="{Binding PathHeaderSubtitle}"
-                                               FontSize="11" Foreground="#383C40" TextWrapping="Wrap" />
+                                               FontSize="13" Foreground="#383C40" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -167,16 +167,16 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Stretch="Uniform" />
                             </Border>
-                            <Border Grid.Column="1" Background="#FFFFFF" Padding="16, 0">
+                            <Border Grid.Column="1" Background="#FFFFFF" Padding="12, 8">
                                 <Grid ColumnDefinitions="*, 85" VerticalAlignment="Center">
-                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="6">
                                         <TextBlock Text="{Binding InstallHeaderTitle}"
                                                    FontSize="16" FontWeight="Bold" Foreground="#1A1C1E" />
                                         <TextBlock Text="{Binding InstallHeaderSubtitle}"
-                                                   FontSize="11" Foreground="#383C40" TextWrapping="Wrap" />
+                                                   FontSize="13" Foreground="#383C40" TextWrapping="Wrap" />
                                     </StackPanel>
                                     <Image Grid.Column="1" Source="{Binding StatusMascot}" Width="75" Height="60"
-                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                           HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0, -8, 0, -8" />
                                 </Grid>
                             </Border>
                         </Grid>
@@ -199,6 +199,9 @@
 
                         <TextBox Grid.Row="3" Name="LogsTextBox" Text="{Binding DetailedLogs}"
                                  IsReadOnly="True" AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  FontSize="10" FontFamily="Consolas, Cascadia Code, Courier New, monospace"
                                  Background="#FFFFFF" BorderBrush="#B8BCBF"
                                  IsVisible="{Binding IsDetailsVisible}" Margin="0, 4, 0, 0" />

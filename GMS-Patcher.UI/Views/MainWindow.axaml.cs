@@ -6,6 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using GMS_Patcher.UI.Services;
 using GMS_Patcher.UI.ViewModels;
 
@@ -27,6 +29,26 @@ public partial class MainWindow : Window
             dropBorder.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
             dropBorder.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
             dropBorder.AddHandler(DragDrop.DropEvent, OnDrop);
+        }
+
+        var logsTextBox = this.FindControl<TextBox>("LogsTextBox");
+        if (logsTextBox != null)
+        {
+            logsTextBox.PropertyChanged += (sender, e) =>
+            {
+                if (e.Property == TextBox.TextProperty || e.Property == Visual.IsVisibleProperty)
+                {
+                    if (logsTextBox.IsVisible && logsTextBox.Text != null)
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            logsTextBox.CaretIndex = logsTextBox.Text?.Length ?? 0;
+                            var sv = logsTextBox.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+                            sv?.ScrollToEnd();
+                        }, DispatcherPriority.Loaded);
+                    }
+                }
+            };
         }
     }
 

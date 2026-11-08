@@ -562,8 +562,8 @@ public class MainWindowViewModel : ViewModelBase
         if (freeSpace >= 0)
         {
             string freeFormatted = freeSpace >= 1024
-                ? $"{(freeSpace / 1024.0):0.0} Гбайт"
-                : $"{freeSpace:0.0} Мбайт";
+                ? $"{(freeSpace / 1024.0):0.0} GB"
+                : $"{freeSpace:0.0} MB";
             SpaceAvailableText = ThemeManager.SpaceAvailable(freeFormatted);
         }
         else

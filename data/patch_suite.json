@@ -2,7 +2,7 @@
   "name": "DELTARUNE Russian Translation",
   "gameId": "deltarune",
   "version": "1.2.0",
-  "requiredSpaceMB": 69,
+  "requiredSpaceMB": 2048,
   "detection": {
     "windowsExe": "DELTARUNE.exe",
     "macApp": "DELTARUNE.app",
