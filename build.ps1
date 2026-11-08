@@ -4,6 +4,7 @@ if (Test-Path "./publish") {
 
 $cliProject = "GMS-Patcher/GMS-UTML-Patcher.csproj"
 $uiProject = "GMS-Patcher.UI/GMS-Patcher.UI.csproj"
+$diffProject = "GMS-Patcher-Diff/GMS-Patcher-Diff.csproj"
 
 function Publish-Target {
     param(
@@ -29,6 +30,13 @@ Publish-Target -Name "CLI MacOS x64" -Project $cliProject -Runtime "osx-x64" -Ou
 Publish-Target -Name "CLI Linux x64" -Project $cliProject -Runtime "linux-x64" -OutputDir "./publish/GMS-UTML-Patcher-CLI-linux-x64"
 Publish-Target -Name "CLI Linux arm" -Project $cliProject -Runtime "linux-arm" -OutputDir "./publish/GMS-UTML-Patcher-CLI-linux-arm"
 Publish-Target -Name "CLI Linux arm64" -Project $cliProject -Runtime "linux-arm64" -OutputDir "./publish/GMS-UTML-Patcher-CLI-linux-arm64"
+
+# 3. Build DIFF CLI
+Publish-Target -Name "DIFF Windows x64" -Project $diffProject -Runtime "win-x64" -OutputDir "./publish/GMS-Patcher-Diff-win-x64"
+Publish-Target -Name "DIFF MacOS arm64" -Project $diffProject -Runtime "osx-arm64" -OutputDir "./publish/GMS-Patcher-Diff-osx-arm64"
+Publish-Target -Name "DIFF MacOS x64" -Project $diffProject -Runtime "osx-x64" -OutputDir "./publish/GMS-Patcher-Diff-osx-x64"
+Publish-Target -Name "DIFF Linux x64" -Project $diffProject -Runtime "linux-x64" -OutputDir "./publish/GMS-Patcher-Diff-linux-x64"
+Publish-Target -Name "DIFF Linux arm64" -Project $diffProject -Runtime "linux-arm64" -OutputDir "./publish/GMS-Patcher-Diff-linux-arm64"
 
 # 4. Create zip archives
 $archivesPath = "./publish/archives"

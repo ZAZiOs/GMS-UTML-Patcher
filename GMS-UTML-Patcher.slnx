@@ -9,4 +9,5 @@
     <Project Path="UndertaleModTool/Underanalyzer/Underanalyzer/Underanalyzer.csproj" />
   </Folder>
   <Project Path="GMS-Patcher.UI/GMS-Patcher.UI.csproj" />
+  <Project Path="GMS-Patcher-Diff/GMS-Patcher-Diff.csproj" />
 </Solution>
