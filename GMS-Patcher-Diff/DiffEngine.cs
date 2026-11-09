@@ -24,6 +24,17 @@ public class DiffEngine
 
         Directory.CreateDirectory(options.OutputDir);
 
+        // Clean any existing patch subdirectories to prevent orphaned files from previous runs
+        string[] patchSubdirs = { "code", "graphics", "audio", "fonts", "objects", "rooms", "shaders", "graphics-temp", "fonts-temp" };
+        foreach (var dir in patchSubdirs)
+        {
+            string p = Path.Combine(options.OutputDir, dir);
+            if (Directory.Exists(p))
+            {
+                try { Directory.Delete(p, true); } catch { }
+            }
+        }
+
         Console.WriteLine($"[1/10] Computing SHA256 of original file...");
         string sha256;
         using (var sha = SHA256.Create())
@@ -57,6 +68,20 @@ public class DiffEngine
         ulong timestamp = originalData.GeneralInfo?.Timestamp ?? 0;
 
         Console.WriteLine($"Game: {gameName} | GMS2: {isGms2} | YYC: {isYyc} | Timestamp: {timestamp}");
+
+        if (originalData.IsGameMaker2() != moddedData.IsGameMaker2())
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine();
+            Console.WriteLine("  [!] WARNING: Different GameMaker Engine Generations Detected!");
+            Console.WriteLine($"      Original : {(originalData.IsGameMaker2() ? "GameMaker Studio 2" : "GameMaker: Studio 1.4")} (Bytecode {originalData.GeneralInfo?.BytecodeVersion})");
+            Console.WriteLine($"      Modded   : {(moddedData.IsGameMaker2() ? "GameMaker Studio 2" : "GameMaker: Studio 1.4")} (Bytecode {moddedData.GeneralInfo?.BytecodeVersion})");
+            Console.WriteLine("      Cross-engine patching has inherent compatibility limits (GMS2 layers,");
+            Console.WriteLine("      cameras, array literals cannot run under GMS 1.4 runner executable).");
+            Console.WriteLine("      GMS2 runtime compatibility shims will be excluded from the patch.");
+            Console.WriteLine();
+            Console.ResetColor();
+        }
 
         // 4. Code
         int codeCount = 0;

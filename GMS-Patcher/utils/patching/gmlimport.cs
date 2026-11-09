@@ -111,6 +111,44 @@ public class BasicGMLImport
             {
                 string code = File.ReadAllText(file);
                 string codeName = Path.GetFileNameWithoutExtension(file);
+
+                // If code entry is not found directly and it is an object collision event,
+                // resolve it to the object's collision event slot via EventHandlerFor
+                if (Data.Code.ByName(codeName) == null &&
+                    codeName.StartsWith("gml_Object_", StringComparison.Ordinal) &&
+                    codeName.Contains("_Collision_"))
+                {
+                    int colPos = codeName.IndexOf("_Collision_", StringComparison.Ordinal);
+                    string objName = codeName.Substring("gml_Object_".Length, colPos - "gml_Object_".Length);
+                    string targetStr = codeName.Substring(colPos + "_Collision_".Length);
+
+                    var obj = Data.GameObjects.ByName(objName);
+                    if (obj != null)
+                    {
+                        var targetObj = Data.GameObjects.ByName(targetStr);
+                        if (targetObj != null)
+                        {
+                            int targetIdx = Data.GameObjects.IndexOf(targetObj);
+                            if (targetIdx >= 0)
+                            {
+                                var resolvedCode = obj.EventHandlerFor(EventType.Collision, (uint)targetIdx, Data);
+                                if (resolvedCode != null)
+                                {
+                                    codeName = resolvedCode.Name.Content;
+                                }
+                            }
+                        }
+                        else if (uint.TryParse(targetStr, out uint tIdx) && tIdx < Data.GameObjects.Count)
+                        {
+                            var resolvedCode = obj.EventHandlerFor(EventType.Collision, tIdx, Data);
+                            if (resolvedCode != null)
+                            {
+                                codeName = resolvedCode.Name.Content;
+                            }
+                        }
+                    }
+                }
+
                 importGroup.QueueReplace(codeName, code);
                 importedCount++;
                 if (config.debug)

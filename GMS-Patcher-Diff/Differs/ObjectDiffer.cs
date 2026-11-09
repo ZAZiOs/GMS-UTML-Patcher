@@ -50,54 +50,9 @@ public class ObjectDiffer
                 }
                 else
                 {
-                    // Compare events 0..13, ignoring dummy PreCreate (event 14) if original had none
-                    int maxEvents = Math.Max(modObj.Events.Count, origObj.Events.Count);
-                    for (int t = 0; t < maxEvents; t++)
+                    if (!AreObjectEventsLogicallyEqual(modObj, modded, origObj, original))
                     {
-                        var modSub = t < modObj.Events.Count ? modObj.Events[t] : null;
-                        var origSub = t < origObj.Events.Count ? origObj.Events[t] : null;
-
-                        if (t == 14) // PreCreate special case (auto-generated in GMS2)
-                        {
-                            bool origHasReal = origSub != null && origSub.Any(e => !IsDummyPreCreate(e));
-                            bool modHasReal = modSub != null && modSub.Any(e => !IsDummyPreCreate(e));
-                            if (origHasReal != modHasReal)
-                            {
-                                differs = true;
-                                break;
-                            }
-                            continue;
-                        }
-
-                        int modCount = modSub?.Count ?? 0;
-                        int origCount = origSub?.Count ?? 0;
-                        if (modCount != origCount)
-                        {
-                            differs = true;
-                            break;
-                        }
-
-                        for (int e = 0; e < modCount; e++)
-                        {
-                            var mEv = modSub![e];
-                            var oEv = origSub![e];
-                            if (mEv.EventSubtype != oEv.EventSubtype || mEv.Actions.Count != oEv.Actions.Count)
-                            {
-                                differs = true;
-                                break;
-                            }
-
-                            for (int a = 0; a < mEv.Actions.Count; a++)
-                            {
-                                if (mEv.Actions[a].CodeId?.Name?.Content != oEv.Actions[a].CodeId?.Name?.Content)
-                                {
-                                    differs = true;
-                                    break;
-                                }
-                            }
-                            if (differs) break;
-                        }
-                        if (differs) break;
+                        differs = true;
                     }
                 }
 
@@ -129,11 +84,63 @@ public class ObjectDiffer
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"  Warning: Failed to export object {obj.Name.Content}: {ex.Message}");
+                Console.Error.WriteLine($"  Warning: Failed to serialize object {obj.Name.Content}: {ex.Message}");
             }
         }
 
         return count;
+    }
+
+    private static bool AreObjectEventsLogicallyEqual(UndertaleGameObject modObj, UndertaleData modded,
+                                                     UndertaleGameObject origObj, UndertaleData original)
+    {
+        int maxEvents = Math.Max(modObj.Events.Count, origObj.Events.Count);
+        for (int t = 0; t < maxEvents; t++)
+        {
+            var modSub = t < modObj.Events.Count ? modObj.Events[t] : null;
+            var origSub = t < origObj.Events.Count ? origObj.Events[t] : null;
+
+            if (t == (int)EventType.PreCreate) // PreCreate special case (auto-generated in GMS2)
+            {
+                bool origHasReal = origSub != null && origSub.Any(e => !IsDummyPreCreate(e));
+                bool modHasReal = modSub != null && modSub.Any(e => !IsDummyPreCreate(e));
+                if (origHasReal != modHasReal)
+                    return false;
+                continue;
+            }
+
+            var modKeys = GetEventKeys(modSub, (EventType)t, modded);
+            var origKeys = GetEventKeys(origSub, (EventType)t, original);
+
+            if (!modKeys.SetEquals(origKeys))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static HashSet<string> GetEventKeys(IList<UndertaleGameObject.Event>? subList, EventType eventType, UndertaleData data)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        if (subList == null) return set;
+
+        foreach (var ev in subList)
+        {
+            if (eventType == EventType.Collision)
+            {
+                int targetIdx = (int)ev.EventSubtype;
+                string targetName = (targetIdx >= 0 && targetIdx < data.GameObjects.Count)
+                    ? (data.GameObjects[targetIdx]?.Name?.Content ?? targetIdx.ToString())
+                    : targetIdx.ToString();
+                set.Add($"Collision:{targetName}");
+            }
+            else
+            {
+                set.Add($"{eventType}:{ev.EventSubtype}");
+            }
+        }
+
+        return set;
     }
 
     private static bool IsDummyPreCreate(UndertaleGameObject.Event ev)

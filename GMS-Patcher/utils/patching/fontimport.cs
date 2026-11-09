@@ -159,12 +159,6 @@ public class ImportFontsBase
 
             try
             {
-                if (head == 1)
-                {
-                    newFont.RangeStart = UInt16.Parse(s[0]);
-                    head++;
-                }
-
                 if (head == 0)
                 {
                     String namae = s[0].Replace("\"", "");
@@ -178,8 +172,12 @@ public class ImportFontsBase
                     newFont.ScaleY = UInt16.Parse(s[7]);
                     head++;
                 }
-
-                if (head > 1)
+                else if (head == 1)
+                {
+                    newFont.RangeStart = UInt16.Parse(s[0]);
+                    head++;
+                }
+                else
                 {
                     newFont.Glyphs.Add(new UndertaleFont.Glyph()
                     {
@@ -194,9 +192,10 @@ public class ImportFontsBase
                     newFont.RangeEnd = UInt32.Parse(s[0]);
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 hadError = true;
+                Out.ERROR("FONTS", "cyan", 0, $"Line '{line}': {ex.Message}");
             }
         }
 

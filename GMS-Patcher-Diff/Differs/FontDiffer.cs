@@ -128,8 +128,25 @@ public class FontDiffer
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"  Warning: Failed to export font {font.Name.Content}: {ex.Message}");
+                    Console.Error.WriteLine($"  Warning: Failed to export font texture {font.Name.Content}: {ex.Message}");
                 }
+            }
+
+            // Export glyphs CSV required by GMS-UTML-Patcher font importer
+            try
+            {
+                string csvPath = Path.Combine(fontsDir, $"glyphs_{font.Name.Content}.csv");
+                using var writer = new StreamWriter(csvPath);
+                writer.WriteLine($"\"{font.DisplayName?.Content ?? font.Name.Content}\";{font.EmSize};{font.Bold};{font.Italic};{font.Charset};{font.AntiAliasing};{font.ScaleX};{font.ScaleY}");
+                writer.WriteLine($"{font.RangeStart}");
+                foreach (var g in font.Glyphs)
+                {
+                    writer.WriteLine($"{g.Character};{g.SourceX};{g.SourceY};{g.SourceWidth};{g.SourceHeight};{g.Shift};{g.Offset}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"  Warning: Failed to export font glyphs {font.Name.Content}: {ex.Message}");
             }
         }
 

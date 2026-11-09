@@ -133,28 +133,6 @@ public static class PatchFile
             }
         }
 
-        if (TryProcessSection(doc, "gml", out var gmlElement))
-        {
-            try
-            {
-                var config = JsonSerializer.Deserialize<GMLImportConfig>(gmlElement.GetRawText(), _jsonOptions);
-                if (config is null)
-                {
-                    Out.WARN("PATCHER", "gray", "Failed to deserialize GML config.");
-                    return 0;
-                }
-
-                Out.INFO("PATCHER", "gray", "Importing code files...");
-                int result = GMLImporter.Import(data, config);
-                if (result != 0) return result;
-            }
-            catch (Exception ex)
-            {
-                Out.ERROR("PATCHER", "gray", 340, $"GML import failed: {ex.Message}");
-                return 340;
-            }
-        }
-
         if (TryProcessSection(doc, "objects", out var objectsElement))
         {
             try
@@ -174,6 +152,28 @@ public static class PatchFile
             {
                 Out.ERROR("PATCHER", "gray", 360, $"Objects import failed: {ex.Message}");
                 return 360;
+            }
+        }
+
+        if (TryProcessSection(doc, "gml", out var gmlElement))
+        {
+            try
+            {
+                var config = JsonSerializer.Deserialize<GMLImportConfig>(gmlElement.GetRawText(), _jsonOptions);
+                if (config is null)
+                {
+                    Out.WARN("PATCHER", "gray", "Failed to deserialize GML config.");
+                    return 0;
+                }
+
+                Out.INFO("PATCHER", "gray", "Importing code files...");
+                int result = GMLImporter.Import(data, config);
+                if (result != 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Out.ERROR("PATCHER", "gray", 340, $"GML import failed: {ex.Message}");
+                return 340;
             }
         }
 
